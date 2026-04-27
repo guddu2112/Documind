@@ -1,0 +1,116 @@
+# DocuMind — Contract document type
+
+name: contract
+display_name: "Contract / Agreement"
+description: >
+  Legal contracts and service agreements. Pipeline extracts parties,
+  key clauses, obligations, termination conditions, and identifies
+  potential risks.
+version: "1.0"
+
+supported_formats:
+  - pdf
+  - docx
+  - pptx
+
+doc_intelligence_model: prebuilt-contract
+
+extraction_fields:
+  - name: contract_title
+    label: "Contract Title"
+    field_type: text
+    required: true
+    description: "Title or name of the contract."
+
+  - name: parties
+    label: "Parties"
+    field_type: list
+    required: true
+    description: "All parties (individuals or organisations) involved."
+
+  - name: effective_date
+    label: "Effective Date"
+    field_type: date
+    required: true
+    description: "Date the contract becomes effective."
+
+  - name: expiration_date
+    label: "Expiration Date"
+    field_type: date
+    required: false
+    description: "Date the contract expires or must be renewed."
+
+  - name: contract_value
+    label: "Contract Value"
+    field_type: currency
+    required: false
+    description: "Total monetary value of the contract."
+
+  - name: payment_terms
+    label: "Payment Terms"
+    field_type: text
+    required: false
+    description: "Payment schedule, milestones, or terms."
+
+  - name: key_clauses
+    label: "Key Clauses"
+    field_type: list
+    required: true
+    description: "Important clauses such as indemnification, liability, IP, confidentiality."
+
+  - name: termination_conditions
+    label: "Termination Conditions"
+    field_type: list
+    required: true
+    description: "Conditions under which the contract may be terminated."
+
+  - name: obligations
+    label: "Obligations"
+    field_type: table
+    required: true
+    description: "Party-specific obligations and deliverables."
+
+  - name: governing_law
+    label: "Governing Law"
+    field_type: text
+    required: false
+    description: "Jurisdiction or governing law referenced."
+
+analysis_tasks:
+  - name: extract_clauses
+    prompt_template: contract-clauses.txt
+    description: "Extract and categorise all contractual clauses with risk ratings."
+
+search_field_mappings:
+  - source_field: contract_title
+    index_field: title
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: parties
+    index_field: parties
+    searchable: true
+    filterable: true
+    facetable: true
+
+  - source_field: key_clauses
+    index_field: content
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: effective_date
+    index_field: effective_date
+    searchable: false
+    filterable: true
+    facetable: false
+
+  - source_field: contract_value
+    index_field: value
+    searchable: false
+    filterable: true
+    facetable: false
+
+metadata:
+  category: "legal"

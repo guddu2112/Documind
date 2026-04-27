@@ -1,0 +1,111 @@
+# DocuMind — RFP (Request for Proposal) document type
+# Drop new YAML files in this directory to add more document types.
+
+name: rfp
+display_name: "Request for Proposal"
+description: >
+  RFP documents issued by organisations seeking vendor proposals.
+  Pipeline extracts key requirements, evaluation criteria, timelines,
+  and submission instructions.
+version: "1.0"
+
+supported_formats:
+  - pdf
+  - docx
+  - pptx
+
+doc_intelligence_model: prebuilt-layout
+
+extraction_fields:
+  - name: issuing_organization
+    label: "Issuing Organization"
+    field_type: text
+    required: true
+    description: "The organization that published the RFP."
+
+  - name: rfp_title
+    label: "RFP Title"
+    field_type: text
+    required: true
+    description: "Official title of the RFP."
+
+  - name: rfp_number
+    label: "RFP Number / Reference"
+    field_type: text
+    required: false
+    description: "Unique identifier or reference number of the RFP."
+
+  - name: submission_deadline
+    label: "Submission Deadline"
+    field_type: date
+    required: true
+    description: "Final date and time for proposal submission."
+
+  - name: scope_of_work
+    label: "Scope of Work"
+    field_type: text
+    required: true
+    description: "Description of the work or services being solicited."
+
+  - name: requirements
+    label: "Requirements"
+    field_type: list
+    required: true
+    description: "List of mandatory and optional requirements."
+
+  - name: evaluation_criteria
+    label: "Evaluation Criteria"
+    field_type: table
+    required: true
+    description: "Criteria and weights used to evaluate proposals."
+
+  - name: budget_range
+    label: "Budget Range"
+    field_type: currency
+    required: false
+    description: "Indicated budget or cost ceiling, if disclosed."
+
+  - name: contract_duration
+    label: "Contract Duration"
+    field_type: text
+    required: false
+    description: "Expected duration or term of the resulting contract."
+
+  - name: point_of_contact
+    label: "Point of Contact"
+    field_type: text
+    required: false
+    description: "Contact person for questions about the RFP."
+
+analysis_tasks:
+  - name: summarize
+    prompt_template: rfp-summary.txt
+    description: "Generate an executive summary of the RFP."
+
+search_field_mappings:
+  - source_field: rfp_title
+    index_field: title
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: issuing_organization
+    index_field: organization
+    searchable: true
+    filterable: true
+    facetable: true
+
+  - source_field: scope_of_work
+    index_field: content
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: submission_deadline
+    index_field: deadline
+    searchable: false
+    filterable: true
+    facetable: false
+
+metadata:
+  category: "procurement"

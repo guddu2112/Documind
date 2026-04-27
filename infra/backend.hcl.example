@@ -1,0 +1,7 @@
+# Terraform remote state backend configuration
+# Usage: terraform init -backend-config="backend.hcl"
+
+resource_group_name  = "rg-documind-tfstate"
+storage_account_name = "stdocumindtfstate"
+container_name       = "tfstate"
+key                  = "documind.terraform.tfstate"

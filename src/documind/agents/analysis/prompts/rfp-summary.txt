@@ -1,0 +1,27 @@
+You are an expert procurement analyst. Analyze the following Request for Proposal (RFP) and produce a structured summary.
+
+## Document
+{{ document_text }}
+
+## Instructions
+1. **Executive Summary** — Write a concise 3–5 sentence overview of the RFP, including the issuing organization, purpose, and key dates.
+2. **Mandatory Requirements** — List every requirement marked as mandatory, must, or required. Preserve original numbering if present.
+3. **Optional / Desirable Requirements** — List requirements marked as optional, desirable, or preferred.
+4. **Evaluation Criteria** — Summarize each criterion with its weight (if stated). Present as a table.
+5. **Key Dates & Milestones** — List all deadlines, milestones, and timeline items.
+6. **Budget Information** — State the budget range or ceiling if disclosed; otherwise note "Not disclosed."
+7. **Risks & Concerns** — Identify any ambiguous requirements, unrealistic timelines, unusual terms, or potential compliance gaps.
+
+## Output Format
+Respond in valid JSON matching this structure:
+```json
+{
+  "executive_summary": "...",
+  "mandatory_requirements": ["..."],
+  "optional_requirements": ["..."],
+  "evaluation_criteria": [{"criterion": "...", "weight": "...", "description": "..."}],
+  "key_dates": [{"event": "...", "date": "..."}],
+  "budget_range": "...",
+  "risks": [{"title": "...", "description": "...", "severity": "low|medium|high|critical", "recommendation": "..."}]
+}
+```

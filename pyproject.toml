@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "documind"
+version = "0.1.0"
+description = "DocuMind — Intelligent Document Processing Pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Proprietary"}
+
+dependencies = [
+    # Microsoft Agent Framework — install agentserver first, then framework (see README)
+    "agent-framework-core==1.0.0rc6",
+    "agent-framework-foundry==1.0.0rc6",
+    "agent-framework-openai==1.0.0rc6",
+    # Azure SDKs
+    "azure-identity>=1.17.0",
+    "azure-ai-documentintelligence>=1.0.0",
+    "azure-search-documents>=11.5.0",
+    "azure-storage-blob>=12.20.0",
+    "azure-cosmos>=4.7.0",
+    "azure-keyvault-secrets>=4.8.0",
+    "azure-monitor-opentelemetry>=1.6.0",
+    # API
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-multipart>=0.0.9",
+    "websockets>=12.0",
+    # Utilities
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=24.1.0",
+    "tenacity>=8.3.0",
+    "jinja2>=3.1.0",
+    "pyyaml>=6.0.0",
+    # Auth
+    "PyJWT[crypto]>=2.8.0",
+    # OpenTelemetry
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.27.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "pre-commit>=3.7.0",
+]
+eval = [
+    "rouge-score>=0.1.2",
+    "bert-score>=0.3.13",
+    "pandas>=2.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true

@@ -1,0 +1,111 @@
+# DocuMind — Technical Specification document type
+
+name: spec
+display_name: "Technical Specification"
+description: >
+  Technical specifications, functional requirement documents (FRDs),
+  and system design documents. Pipeline extracts requirements,
+  acceptance criteria, and checks compliance against standards.
+version: "1.0"
+
+supported_formats:
+  - pdf
+  - docx
+  - pptx
+  - xlsx
+
+doc_intelligence_model: prebuilt-layout
+
+extraction_fields:
+  - name: document_title
+    label: "Document Title"
+    field_type: text
+    required: true
+    description: "Title of the specification document."
+
+  - name: document_version
+    label: "Document Version"
+    field_type: text
+    required: false
+    description: "Version number or revision identifier."
+
+  - name: author
+    label: "Author / Owner"
+    field_type: text
+    required: false
+    description: "Person or team that authored the document."
+
+  - name: functional_requirements
+    label: "Functional Requirements"
+    field_type: list
+    required: true
+    description: "Numbered list of functional requirements with IDs."
+
+  - name: non_functional_requirements
+    label: "Non-Functional Requirements"
+    field_type: list
+    required: true
+    description: "Performance, security, scalability, and other NFRs."
+
+  - name: acceptance_criteria
+    label: "Acceptance Criteria"
+    field_type: table
+    required: true
+    description: "Acceptance criteria mapped to requirements."
+
+  - name: dependencies
+    label: "Dependencies"
+    field_type: list
+    required: false
+    description: "External systems, services, or libraries depended upon."
+
+  - name: standards_references
+    label: "Standards & References"
+    field_type: list
+    required: false
+    description: "Industry standards or internal standards referenced (e.g. ISO, IEEE)."
+
+  - name: assumptions_constraints
+    label: "Assumptions & Constraints"
+    field_type: list
+    required: false
+    description: "Stated assumptions and constraints."
+
+  - name: glossary
+    label: "Glossary"
+    field_type: table
+    required: false
+    description: "Domain-specific terms and definitions."
+
+analysis_tasks:
+  - name: compliance_check
+    prompt_template: spec-compliance.txt
+    description: "Check the spec for completeness, ambiguity, and standards compliance."
+
+search_field_mappings:
+  - source_field: document_title
+    index_field: title
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: functional_requirements
+    index_field: content
+    searchable: true
+    filterable: false
+    facetable: false
+
+  - source_field: standards_references
+    index_field: standards
+    searchable: true
+    filterable: true
+    facetable: true
+
+  - source_field: document_version
+    index_field: version
+    searchable: false
+    filterable: true
+    facetable: false
+
+metadata:
+  category: "engineering"

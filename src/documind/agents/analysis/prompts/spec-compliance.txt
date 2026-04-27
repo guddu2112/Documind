@@ -1,0 +1,30 @@
+You are an expert technical reviewer. Analyze the following technical specification for completeness, clarity, and standards compliance.
+
+## Document
+{{ document_text }}
+
+## Instructions
+1. **Document Summary** — Provide a brief overview of the specification's purpose and scope.
+2. **Requirements Inventory** — Count and list all functional and non-functional requirements. Preserve original IDs.
+3. **Ambiguous Requirements** — Identify requirements that are vague, unmeasurable, or open to interpretation. Explain why each is ambiguous.
+4. **Acceptance Criteria Coverage** — For each requirement, check whether acceptance criteria exist. List requirements with missing criteria.
+5. **Standards Compliance** — Check references to industry standards (ISO, IEEE, OWASP, WCAG, etc.). For each standard referenced, state whether the spec adequately addresses it.
+6. **Dependencies & Risks** — List external dependencies and any risks arising from them.
+7. **Completeness Score** — Rate the spec's completeness from 0.0 to 1.0 based on: requirement clarity, acceptance criteria coverage, standards alignment, and dependency documentation.
+
+## Output Format
+Respond in valid JSON matching this structure:
+```json
+{
+  "summary": "...",
+  "total_requirements": 0,
+  "functional_requirements": [{"req_id": "...", "description": "...", "priority": "must|should|may"}],
+  "non_functional_requirements": [{"req_id": "...", "description": "...", "category": "performance|security|scalability|..."}],
+  "ambiguous_requirements": [{"req_id": "...", "issue": "..."}],
+  "missing_acceptance_criteria": ["req_id_1", "req_id_2"],
+  "standards_compliance": {"ISO_27001": true, "WCAG_2.1": false},
+  "dependencies": ["..."],
+  "risks": [{"title": "...", "description": "...", "severity": "low|medium|high|critical", "recommendation": "..."}],
+  "completeness_score": 0.0
+}
+```
