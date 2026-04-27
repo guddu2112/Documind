@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     # ---- Monitoring ----
     applicationinsights_connection_string: str = Field("")
 
+    # ---- Pipeline / Chunker ----
+    chunker_max_tokens: int = Field(8000, description="Max tokens per chunk for LLM analysis.")
+    chunker_overlap_tokens: int = Field(200, description="Overlap tokens between consecutive chunks.")
+
+    # ---- OpenAI (used by analysis tools & MCP) ----
+    azure_openai_key: str = Field("", description="Azure OpenAI API key.")
+    azure_openai_api_version: str = Field("2024-06-01", description="Azure OpenAI API version.")
+    azure_openai_deployment: str = Field("gpt-4o", description="Azure OpenAI deployment name.")
+
 
 # Module-level singleton — import this from anywhere
 settings = Settings()

@@ -386,3 +386,70 @@ Phase 1: Task Registry
 | `tests/test_task_registry.py` | 1 | Registry CRUD, decorator, duplicate handling |
 | `tests/test_mcp_server.py` | 3 | Tool invocation, mock LLM, error paths |
 | `tests/test_add_doctype.py` | 4 | File generation, overwrite protection |
+
+---
+
+## DocuMind Web — React SPA *(Optional)*
+
+> **This component is entirely optional.** The accelerator works fully without it.
+> The Web UI provides a browser-based interface for demos and client engagements.
+
+### Overview
+
+Single-page React application for uploading documents, monitoring pipeline progress, viewing analysis results, and performing semantic search — all connecting to the existing FastAPI backend.
+
+**Stack:** Vite + React 18 + TypeScript + Tailwind CSS
+**Location:** `web/` directory (isolated from Python codebase)
+**Backend:** Existing FastAPI API — no backend changes required
+
+### UI Sections
+
+| Section | Features | API Endpoints |
+|---------|----------|---------------|
+| **Upload** | Drag-and-drop zone, doc_type selector (rfp / contract / spec / auto), upload button, returns document ID | `POST /documents` |
+| **Status & Analysis** | Auto-polls pipeline status (2s interval), shows 4-stage progress (ingestion → extraction → analysis → search), displays analysis results (summary, risks, clauses, tables) on completion | `GET /documents/{id}`, `GET /documents/{id}/analysis` |
+| **Search** | Semantic search box, results with relevance scores and document metadata | `POST /search` |
+
+### File Structure
+
+```
+web/
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts          ← Dev proxy to FastAPI :8000
+├── tailwind.config.js
+├── postcss.config.js
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx              ← Layout with 3 sections (tabbed or stacked)
+│   ├── api.ts               ← Fetch-based API client
+│   ├── components/
+│   │   ├── UploadPanel.tsx   ← Drag-drop + doc_type picker
+│   │   ├── StatusTracker.tsx ← Pipeline stage progress indicator
+│   │   ├── AnalysisView.tsx  ← Summary, risks, clauses display
+│   │   └── SearchPanel.tsx   ← Search box + results list
+│   └── types.ts              ← TypeScript interfaces matching API models
+└── .gitignore
+```
+
+### Tasks
+
+| # | Task | Details | Status |
+|---|------|---------|--------|
+| W1 | Scaffold Vite + React project | `npm create vite@latest web`, add Tailwind, TypeScript config | ☐ |
+| W2 | API client (`api.ts`) | Typed fetch wrapper for `/documents` and `/search` endpoints | ☐ |
+| W3 | Upload panel | Drag-and-drop, doc_type dropdown, file upload with progress | ☐ |
+| W4 | Status tracker | Poll `GET /documents/{id}`, show 4-stage pipeline progress | ☐ |
+| W5 | Analysis view | Render summary, risks table, clauses, extracted tables | ☐ |
+| W6 | Search panel | Search input, call `POST /search`, display ranked results | ☐ |
+| W7 | Makefile targets | Add `web-install`, `web-dev`, `web-build` targets | ☐ |
+| W8 | Optional FastAPI static mount | Serve `web/dist/` via `StaticFiles` when `SERVE_WEB_UI=true` | ☐ |
+
+### Design Decisions
+
+- **No router** — single page, tabbed navigation via React state
+- **No state management library** — `useState` / `useEffect` sufficient
+- **Dev proxy** — Vite proxies API calls to `http://127.0.0.1:8000` (avoids CORS in dev)
+- **Production** — `npm run build` → static files, optionally served by FastAPI or any CDN/web server
+- **Zero backend changes** — all existing API endpoints used as-is

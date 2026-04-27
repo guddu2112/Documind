@@ -23,6 +23,7 @@ import json
 import logging
 from typing import Any, Callable
 
+from documind.agents.analysis.task_registry import register_task
 from documind.core.models.base import AnalysisResult, RiskItem, RiskSeverity
 from documind.doctypes.schema import AnalysisTaskConfig
 from documind.services.prompt_loader import PromptLoader
@@ -54,6 +55,7 @@ def _safe_parse_json(text: str) -> dict[str, Any]:
         return {"raw_response": text}
 
 
+@register_task("summarize")
 def summarize_document(
     document_text: str,
     doc_type: str,
@@ -79,6 +81,7 @@ def summarize_document(
     return result
 
 
+@register_task("extract_clauses")
 def extract_clauses(
     document_text: str,
     doc_type: str,
@@ -131,6 +134,7 @@ def identify_risks(
     return items
 
 
+@register_task("compliance_check")
 def check_compliance(
     document_text: str,
     doc_type: str,

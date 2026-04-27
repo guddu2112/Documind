@@ -33,6 +33,7 @@ from documind.agents.ingestion.agent import (
 )
 from documind.agents.search.agent import SearchExecutor, SearchOutput
 from documind.core.models.base import DocumentRecord, ProcessingStatus
+from documind.core.protocols import StateStoreProtocol
 from documind.services.cosmos import CosmosService
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ class DocumentPipeline:
         extraction: ExtractionExecutor,
         analysis: AnalysisExecutor,
         search: SearchExecutor,
-        cosmos: Optional[CosmosService] = None,
+        cosmos: Optional[StateStoreProtocol] = None,
     ) -> None:
         self._ingestion = ingestion
         self._extraction = extraction

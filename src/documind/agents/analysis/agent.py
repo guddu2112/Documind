@@ -15,12 +15,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from documind.agents.analysis.tools.tools import (
-    build_analysis_result,
-    check_compliance,
-    extract_clauses,
-    summarize_document,
-)
+from documind.agents.analysis.task_registry import TaskRegistry
+from documind.agents.analysis.tools.tools import build_analysis_result  # noqa: F401 — triggers @register_task
 from documind.agents.extraction.agent import ExtractionOutput
 from documind.core.models.base import AnalysisResult
 from documind.doctypes.registry import DocTypeRegistry
@@ -30,15 +26,6 @@ logger = logging.getLogger(__name__)
 
 # Type alias — same as in tools.py
 LLMCaller = Callable[[str], str]
-
-# Map analysis task names → tool functions.
-# When a doc-type config lists an analysis task by name, we dispatch
-# to the matching function here.
-_TASK_DISPATCH: dict[str, Callable] = {
-    "summarize": summarize_document,
-    "extract_clauses": extract_clauses,
-    "compliance_check": check_compliance,
-}
 
 
 @dataclass
@@ -81,7 +68,7 @@ class AnalysisExecutor:
         merged_output: dict[str, Any] = {}
 
         for task in doc_config.analysis_tasks:
-            tool_fn = _TASK_DISPATCH.get(task.name)
+            tool_fn = TaskRegistry.get(task.name)
             if tool_fn is None:
                 logger.warning(
                     "No tool registered for analysis task '%s' — skipping",
