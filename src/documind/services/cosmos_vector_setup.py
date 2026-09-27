@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 def ensure_search_container(
     client=None,
     database_name: str | None = None,
-    container_name: str = "search_index",
+    container_name: str | None = None,
 ) -> None:
     """Create the vector search container if it doesn't exist.
 
@@ -44,7 +44,7 @@ def ensure_search_container(
     Args:
         client:         Optional CosmosClient instance (for testing).
         database_name:  Database name (defaults to settings).
-        container_name: Container name (defaults to "search_index").
+        container_name: Container name (defaults to settings.cosmos_search_container).
     """
     if client is None:
         from azure.cosmos import CosmosClient
@@ -56,6 +56,7 @@ def ensure_search_container(
             client = CosmosClient(settings.azure_cosmos_endpoint, DefaultAzureCredential())
 
     db_name = database_name or settings.azure_cosmos_database
+    container_name = container_name or settings.cosmos_search_container
 
     # Ensure the database exists
     database = client.create_database_if_not_exists(id=db_name)

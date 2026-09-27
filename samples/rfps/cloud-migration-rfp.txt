@@ -1,0 +1,107 @@
+REQUEST FOR PROPOSAL
+Cloud Infrastructure Modernization Services
+RFP-2026-0042
+
+Issued by: Northwind Traders, Inc.
+Date: March 15, 2026
+
+1. INTRODUCTION
+
+Northwind Traders, Inc. ("Northwind") is seeking proposals from qualified
+vendors to modernize its on-premises IT infrastructure by migrating
+workloads to a public cloud platform. This RFP outlines the scope of work,
+evaluation criteria, and submission requirements.
+
+2. ISSUING ORGANIZATION
+
+Northwind Traders, Inc.
+1200 Commerce Drive, Suite 400
+Seattle, WA 98101
+Contact: Maria Chen, VP of Technology
+Email: maria.chen@northwind-traders.example.com
+Phone: (206) 555-0142
+
+3. SUBMISSION DEADLINE
+
+All proposals must be received no later than:
+    April 30, 2026, 5:00 PM Pacific Time
+
+Late submissions will not be considered.
+
+4. SCOPE OF WORK
+
+The selected vendor shall provide the following services:
+
+4.1 Assessment & Planning
+  - Conduct a comprehensive inventory of existing on-premises workloads
+    (approximately 120 virtual machines, 15 databases, 8 web applications).
+  - Develop a migration roadmap with phased approach over 12 months.
+  - Identify dependencies and risk mitigation strategies.
+
+4.2 Migration Execution
+  - Migrate all identified workloads to the target cloud platform.
+  - Implement infrastructure-as-code (IaC) for all provisioned resources.
+  - Configure networking, security groups, and identity management.
+  - Establish CI/CD pipelines for application deployments.
+
+4.3 Optimization & Handover
+  - Right-size cloud resources based on actual utilization metrics.
+  - Implement cost monitoring and alerting dashboards.
+  - Conduct knowledge transfer sessions (minimum 40 hours).
+  - Provide 90-day post-migration hypercare support.
+
+5. REQUIREMENTS
+
+Mandatory Requirements:
+  R1. Vendor must have at least 5 completed cloud migration projects of
+      similar scale (100+ VMs) within the last 3 years.
+  R2. Proposed team must include at least 2 certified cloud architects.
+  R3. Vendor must demonstrate experience with healthcare data compliance
+      (HIPAA).
+  R4. Migration must achieve zero unplanned downtime for Tier-1 applications.
+  R5. All infrastructure must be defined as code (Terraform, Bicep, or
+      equivalent).
+
+Optional Requirements:
+  R6. Experience with Kubernetes orchestration for containerized workloads.
+  R7. Ability to implement FinOps practices and cost governance frameworks.
+  R8. Multi-cloud strategy consulting capabilities.
+
+6. EVALUATION CRITERIA
+
+Proposals will be evaluated based on the following criteria:
+
+  Criterion                          Weight
+  ─────────────────────────────────  ──────
+  Technical Approach & Methodology    35%
+  Team Qualifications & Experience    25%
+  Past Performance & References       20%
+  Cost Proposal                       15%
+  Innovation & Value-Add               5%
+
+7. BUDGET RANGE
+
+The estimated budget for this engagement is $800,000 to $1,200,000 USD,
+inclusive of all professional services, tools, and licensing costs.
+
+8. CONTRACT DURATION
+
+The initial contract term shall be 18 months, with an option to extend
+for two additional 6-month periods for ongoing managed services.
+
+9. PROPOSAL FORMAT
+
+Proposals shall not exceed 40 pages (excluding appendices) and must
+include:
+  - Executive Summary (max 2 pages)
+  - Technical Approach (max 15 pages)
+  - Team Composition and CVs
+  - Project Timeline (Gantt chart or equivalent)
+  - Cost Breakdown by Phase
+  - Three (3) client references
+
+10. QUESTIONS
+
+All questions regarding this RFP must be submitted in writing to
+maria.chen@northwind-traders.example.com by April 10, 2026.
+Responses will be shared with all prospective bidders.

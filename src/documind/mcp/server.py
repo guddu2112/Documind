@@ -63,7 +63,7 @@ def _get_llm_caller():
         response = client.chat.completions.create(
             model=deployment,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+            temperature=settings.llm_temperature,
         )
         return response.choices[0].message.content or ""
 

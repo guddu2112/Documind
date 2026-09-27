@@ -76,12 +76,12 @@ def _build_pipeline():
         client = AzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
             azure_ad_token_provider=token_provider,
-            api_version="2024-12-01-preview",
+            api_version=settings.azure_openai_api_version,
         )
         response = client.chat.completions.create(
             model=settings.foundry_model_deployment,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+            temperature=settings.llm_temperature,
         )
         return response.choices[0].message.content or ""
 

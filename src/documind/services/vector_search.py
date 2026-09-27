@@ -36,10 +36,10 @@ from documind.core.config.settings import settings
 logger = logging.getLogger(__name__)
 
 # Cosmos DB vector search container name
-_SEARCH_CONTAINER = "search_index"
+_SEARCH_CONTAINER = settings.cosmos_search_container
 
-# Embedding dimensions for text-embedding-3-small
-EMBEDDING_DIMENSIONS = 1536
+# Embedding dimensions from settings (must match the configured model)
+EMBEDDING_DIMENSIONS = settings.embedding_dimensions
 
 
 def _default_cosmos_client():
@@ -271,11 +271,11 @@ def _default_embedding_fn():
         client = AzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
             azure_ad_token_provider=token_provider,
-            api_version="2024-02-01",
+            api_version=settings.azure_openai_api_version,
         )
         response = client.embeddings.create(
             input=text[:32000],  # rough truncation to stay under token limit
-            model="text-embedding-3-small",
+            model=settings.embedding_model,
         )
         return response.data[0].embedding
 

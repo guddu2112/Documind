@@ -1,0 +1,130 @@
+PROFESSIONAL SERVICES AGREEMENT
+
+This Professional Services Agreement ("Agreement") is entered into as of
+January 15, 2026 ("Effective Date"), by and between:
+
+  PROVIDER:  Alpine Solutions Group, LLC
+             800 Innovation Blvd, Austin, TX 78701
+             ("Provider")
+
+  CLIENT:    Woodgrove Bank, N.A.
+             350 Banking Center Drive, Chicago, IL 60601
+             ("Client")
+
+Collectively referred to as the "Parties."
+
+─────────────────────────────────────────────────────────────────────────
+
+1. SCOPE OF SERVICES
+
+Provider shall deliver the following services to Client:
+
+  1.1 Design and implement a customer identity and access management
+      (CIAM) platform for Client's digital banking channels.
+  1.2 Integrate CIAM with Client's existing core banking system,
+      mobile banking application, and online portal.
+  1.3 Implement multi-factor authentication (MFA), adaptive risk-based
+      authentication, and passwordless sign-in capabilities.
+  1.4 Conduct security testing, including penetration testing and
+      vulnerability assessment of the implemented solution.
+  1.5 Provide training to Client's IT operations team (minimum 24 hours).
+
+2. CONTRACT VALUE AND PAYMENT TERMS
+
+  2.1 Total Contract Value: $650,000 USD
+  2.2 Payment Schedule:
+      - 20% ($130,000) upon execution of this Agreement
+      - 30% ($195,000) upon completion of Phase 1 (Design & Architecture)
+      - 30% ($195,000) upon completion of Phase 2 (Implementation & Testing)
+      - 20% ($130,000) upon final acceptance and go-live
+  2.3 Invoices are due Net 30 from date of invoice.
+  2.4 Late payments shall accrue interest at 1.5% per month.
+
+3. TERM AND EXPIRATION
+
+  3.1 This Agreement shall commence on the Effective Date and continue
+      for a period of twelve (12) months, expiring on January 14, 2027.
+  3.2 The Parties may extend this Agreement by mutual written consent
+      for additional six (6) month periods.
+
+4. KEY CLAUSES
+
+  4.1 CONFIDENTIALITY
+      Each Party agrees to maintain the confidentiality of all
+      Confidential Information received from the other Party for a
+      period of five (5) years following disclosure. Confidential
+      Information includes, but is not limited to, technical data,
+      trade secrets, customer lists, and financial information.
+
+  4.2 INTELLECTUAL PROPERTY
+      All pre-existing intellectual property shall remain the property
+      of its respective owner. Work product created specifically for
+      Client under this Agreement ("Deliverables") shall be owned by
+      Client upon full payment. Provider retains rights to its
+      pre-existing tools, frameworks, and methodologies.
+
+  4.3 INDEMNIFICATION
+      Provider shall indemnify and hold harmless Client from any
+      third-party claims arising from Provider's negligence or willful
+      misconduct in performing the Services. Client shall indemnify
+      Provider from claims arising from Client's use of Deliverables
+      in violation of applicable law.
+
+  4.4 LIMITATION OF LIABILITY
+      Neither Party's aggregate liability under this Agreement shall
+      exceed the total Contract Value ($650,000). Neither Party shall
+      be liable for indirect, incidental, consequential, or punitive
+      damages, except in cases of gross negligence or willful misconduct.
+
+  4.5 DATA PROTECTION
+      Provider shall comply with all applicable data protection laws,
+      including GLBA, CCPA, and any applicable state privacy laws.
+      Provider shall implement appropriate technical and organizational
+      measures to protect Client's customer data.
+
+5. TERMINATION CONDITIONS
+
+  5.1 Either Party may terminate this Agreement for convenience upon
+      sixty (60) days' written notice.
+  5.2 Either Party may terminate immediately upon material breach by
+      the other Party, provided the breaching Party has been given
+      thirty (30) days' written notice and opportunity to cure.
+  5.3 Client may terminate immediately if Provider undergoes a change
+      of control, bankruptcy, or insolvency.
+  5.4 Upon termination, Provider shall deliver all work-in-progress
+      and Deliverables to Client within fifteen (15) business days.
+
+6. OBLIGATIONS
+
+  Provider Obligations:
+    - Assign a dedicated project manager and technical lead
+    - Provide weekly status reports and monthly executive summaries
+    - Maintain professional liability insurance of at least $2,000,000
+    - Ensure all personnel pass background checks
+    - Comply with Client's information security policies
+
+  Client Obligations:
+    - Provide timely access to systems, environments, and personnel
+    - Designate a project sponsor and technical point of contact
+    - Review and provide feedback on deliverables within 10 business days
+    - Provide test data and test environments
+    - Execute change orders for scope modifications
+
+7. GOVERNING LAW
+
+This Agreement shall be governed by and construed in accordance with
+the laws of the State of Illinois, without regard to its conflict of
+laws provisions. Any disputes shall be resolved through binding
+arbitration in Chicago, Illinois.
+
+─────────────────────────────────────────────────────────────────────────
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the
+Effective Date.
+
+ALPINE SOLUTIONS GROUP, LLC        WOODGROVE BANK, N.A.
+
+By: _________________________      By: _________________________
+Name: Sarah Mitchell               Name: David Park
+Title: Managing Partner             Title: SVP, Digital Banking
+Date: January 15, 2026             Date: January 15, 2026

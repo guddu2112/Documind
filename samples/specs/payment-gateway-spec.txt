@@ -1,0 +1,119 @@
+TECHNICAL SPECIFICATION
+Mobile Payment Gateway API
+Version 2.1 — January 2026
+
+Document ID: SPEC-MPG-2026-001
+Author: Engineering Platform Team, Tailspin Toys
+Status: Approved
+
+─────────────────────────────────────────────────────────────────────────
+
+1. INTRODUCTION
+
+This document specifies the technical requirements for the Mobile Payment
+Gateway (MPG) API. The MPG enables Tailspin Toys' mobile applications to
+process payments securely across multiple payment providers, currencies,
+and regions.
+
+2. FUNCTIONAL REQUIREMENTS
+
+  FR-001  The system shall support credit card payments (Visa, Mastercard,
+          Amex) via tokenized card-on-file.
+  FR-002  The system shall support digital wallet payments (Apple Pay,
+          Google Pay) via platform-native SDKs.
+  FR-003  The system shall process refunds (full and partial) within the
+          same business day.
+  FR-004  The system shall support idempotent payment requests using a
+          client-generated idempotency key (UUID v4).
+  FR-005  The system shall generate unique transaction IDs for all payment
+          operations (format: TXN-{YYYYMMDD}-{UUID}).
+  FR-006  The system shall support multi-currency transactions with
+          real-time exchange rate lookup.
+  FR-007  The system shall provide webhook notifications for payment
+          status changes (authorized, captured, refunded, failed).
+  FR-008  The system shall support 3D Secure 2.0 authentication for
+          card-not-present transactions.
+  FR-009  The system shall maintain an audit log of all payment operations
+          with tamper-evident hashing.
+  FR-010  The system shall support recurring payments and subscription
+          billing with configurable intervals.
+
+3. NON-FUNCTIONAL REQUIREMENTS
+
+  NFR-001  Availability: 99.99% uptime (measured monthly).
+  NFR-002  Latency: P95 response time ≤ 200ms for payment authorization.
+  NFR-003  Throughput: Support 5,000 transactions per second at peak.
+  NFR-004  Scalability: Horizontal auto-scaling from 4 to 64 instances.
+  NFR-005  Security: PCI-DSS Level 1 compliance required.
+  NFR-006  Data encryption: AES-256 at rest, TLS 1.3 in transit.
+  NFR-007  Data residency: Transaction data must remain in the processing
+           region (US, EU, APAC).
+  NFR-008  Recovery: RPO ≤ 0 (synchronous replication), RTO ≤ 5 minutes.
+  NFR-009  Observability: Distributed tracing for all transactions with
+           correlation IDs propagated across services.
+  NFR-010  Logging: Structured JSON logs with PII masking.
+
+4. ACCEPTANCE CRITERIA
+
+  Requirement    Criterion                                    Method
+  ───────────    ─────────────────────────────────────────     ──────────
+  FR-001         Card payments processed in sandbox           Automated
+  FR-002         Wallet payments verified on iOS + Android    Manual
+  FR-003         Refund reflected in 5 minutes (sandbox)      Automated
+  FR-004         Duplicate requests return same result        Automated
+  FR-005         Transaction ID format validated              Unit test
+  FR-006         3 currency pairs tested (USD/EUR/GBP)        Automated
+  FR-007         Webhook delivered within 30 seconds          Automated
+  FR-008         3DS challenge flow completes end-to-end      Manual
+  NFR-001        Load test sustains 99.99% over 24 hours      Load test
+  NFR-002        P95 ≤ 200ms under 3,000 TPS load             Load test
+  NFR-003        Peak load test at 5,000 TPS passes           Load test
+  NFR-005        PCI-DSS audit report (external assessor)     Audit
+
+5. DEPENDENCIES
+
+  - Payment Provider Gateway SDK v3.x (Stripe or Adyen)
+  - Currency Exchange Rate Service (internal microservice)
+  - Customer Identity Service (OAuth 2.0 / OIDC)
+  - Event Bus (Apache Kafka 3.5+)
+  - Secret Management (Azure Key Vault or HashiCorp Vault)
+  - Certificate Authority for mTLS between services
+
+6. STANDARDS & REFERENCES
+
+  - PCI-DSS v4.0 (Payment Card Industry Data Security Standard)
+  - ISO 8583:2023 (Financial transaction card originated messages)
+  - ISO 4217 (Currency codes)
+  - RFC 7807 (Problem Details for HTTP APIs)
+  - RFC 9457 (Problem Details update)
+  - OpenAPI Specification 3.1.0
+  - OWASP API Security Top 10 (2023)
+
+7. ASSUMPTIONS & CONSTRAINTS
+
+  Assumptions:
+    - Payment providers expose sandbox environments for integration testing.
+    - Customer Identity Service will support token introspection by Q1 2026.
+    - Kafka cluster is pre-provisioned with sufficient partitions.
+
+  Constraints:
+    - No PII (cardholder name, PAN) may be logged or stored outside the
+      PCI-scoped environment.
+    - The API must not introduce new third-party dependencies without
+      security team approval.
+    - All changes must pass automated security scanning (SAST + DAST)
+      before deployment.
+
+8. GLOSSARY
+
+  Term              Definition
+  ────              ──────────
+  PAN               Primary Account Number (credit/debit card number)
+  3DS               3D Secure — cardholder authentication protocol
+  PCI-DSS           Payment Card Industry Data Security Standard
+  TPS               Transactions Per Second
+  RPO               Recovery Point Objective
+  RTO               Recovery Time Objective
+  mTLS              Mutual Transport Layer Security
+  Idempotency Key   Client-supplied unique identifier to prevent
+                    duplicate payment processing

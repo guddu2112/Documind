@@ -1,0 +1,40 @@
+{
+  "document_type": "rfp",
+  "source_file": "cloud-migration-rfp.txt",
+  "extraction": {
+    "issuing_organization": "Northwind Traders, Inc.",
+    "rfp_title": "Cloud Infrastructure Modernization Services",
+    "rfp_number": "RFP-2026-0042",
+    "submission_deadline": "2026-04-30T17:00:00-07:00",
+    "scope_of_work": "Modernize on-premises IT infrastructure by migrating approximately 120 virtual machines, 15 databases, and 8 web applications to a public cloud platform. Services include assessment & planning, migration execution with IaC, optimization, knowledge transfer (40 hours), and 90-day post-migration hypercare support.",
+    "requirements": [
+      {"id": "R1", "type": "mandatory", "text": "At least 5 completed cloud migration projects of similar scale (100+ VMs) within the last 3 years"},
+      {"id": "R2", "type": "mandatory", "text": "Proposed team must include at least 2 certified cloud architects"},
+      {"id": "R3", "type": "mandatory", "text": "Experience with healthcare data compliance (HIPAA)"},
+      {"id": "R4", "type": "mandatory", "text": "Zero unplanned downtime for Tier-1 applications during migration"},
+      {"id": "R5", "type": "mandatory", "text": "All infrastructure defined as code (Terraform, Bicep, or equivalent)"},
+      {"id": "R6", "type": "optional", "text": "Experience with Kubernetes orchestration for containerized workloads"},
+      {"id": "R7", "type": "optional", "text": "Ability to implement FinOps practices and cost governance frameworks"},
+      {"id": "R8", "type": "optional", "text": "Multi-cloud strategy consulting capabilities"}
+    ],
+    "evaluation_criteria": [
+      {"criterion": "Technical Approach & Methodology", "weight": "35%"},
+      {"criterion": "Team Qualifications & Experience", "weight": "25%"},
+      {"criterion": "Past Performance & References", "weight": "20%"},
+      {"criterion": "Cost Proposal", "weight": "15%"},
+      {"criterion": "Innovation & Value-Add", "weight": "5%"}
+    ],
+    "budget_range": "$800,000 – $1,200,000 USD",
+    "contract_duration": "18 months initial, with option for two 6-month extensions",
+    "point_of_contact": "Maria Chen, VP of Technology, maria.chen@northwind-traders.example.com, (206) 555-0142"
+  },
+  "analysis": {
+    "executive_summary": "Northwind Traders seeks a vendor to migrate approximately 120 VMs, 15 databases, and 8 web applications from on-premises infrastructure to a public cloud platform. The engagement spans 18 months with a budget of $800K–$1.2M. Key requirements include HIPAA compliance experience, certified cloud architects, zero-downtime migration for Tier-1 apps, and infrastructure-as-code. Proposals are evaluated primarily on technical approach (35%) and team qualifications (25%).",
+    "risks": [
+      "HIPAA compliance requirement (R3) significantly narrows the vendor pool and may increase costs",
+      "Zero unplanned downtime requirement (R4) for Tier-1 applications demands extensive migration rehearsals",
+      "18-month timeline for 120+ VM migration is aggressive — typical projects of this scale require 12-24 months",
+      "Budget ceiling of $1.2M may be insufficient if legacy application refactoring is needed"
+    ]
+  }
+}

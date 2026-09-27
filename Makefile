@@ -8,6 +8,8 @@ PYTHON   ?= .venv/Scripts/python
 PYTEST   ?= $(PYTHON) -m pytest
 UVICORN  ?= $(PYTHON) -m uvicorn
 PORT     ?= 8000
+ACR_NAME ?= $(shell cd infra && terraform output -raw acr_name 2>/dev/null)
+ACR_SVR  ?= $(shell cd infra && terraform output -raw acr_login_server 2>/dev/null)
 
 # ── Development ─────────────────────────────────────
 
@@ -17,17 +19,29 @@ install: ## Install all dependencies (prod + dev)
 	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -e ".[dev]"
 
+.PHONY: dev
+dev: ## Start API (port 8000) + frontend (port 3000) in parallel
+	$(MAKE) -j2 run web-dev
+
 .PHONY: run
 run: ## Start the API server (default port 8000)
 	$(UVICORN) documind.api.main:app --host 127.0.0.1 --port $(PORT) --reload
 
 .PHONY: test
-test: ## Run all tests with verbose output
-	$(PYTEST) tests/ -v --tb=short
+test: ## Run unit tests (no Azure credentials needed)
+	$(PYTEST) tests/ -v --tb=short --ignore=tests/e2e
 
 .PHONY: test-cov
-test-cov: ## Run tests with coverage report
-	$(PYTEST) tests/ --cov=documind --cov-report=term-missing
+test-cov: ## Run unit tests with coverage report
+	$(PYTEST) tests/ --cov=documind --cov-report=term-missing --ignore=tests/e2e
+
+.PHONY: test-e2e
+test-e2e: ## Run E2E tests against live Azure services (requires .env)
+	$(PYTEST) tests/e2e/ -v --tb=short --e2e --timeout=300
+
+.PHONY: test-all
+test-all: ## Run unit + E2E tests
+	$(PYTEST) tests/ -v --tb=short --e2e --timeout=300
 
 .PHONY: lint
 lint: ## Run ruff linter
@@ -51,6 +65,10 @@ mcp: ## Start the MCP server (stdio transport)
 mcp-sse: ## Start the MCP server (SSE transport)
 	$(PYTHON) -m documind.mcp --sse
 
+.PHONY: mcp-http
+mcp-http: ## Start API + MCP server on port 8000 (Streamable HTTP at /mcp)
+	$(UVICORN) documind.api.main:app --host 127.0.0.1 --port $(PORT) --reload
+
 # ── Scaffolding ─────────────────────────────────────
 
 .PHONY: add-doctype
@@ -58,6 +76,10 @@ add-doctype: ## Scaffold a new doc type (usage: make add-doctype NAME=invoice DI
 	$(PYTHON) scripts/add_doctype.py $(NAME) "$(DISPLAY)" $(if $(TASKS),--tasks $(TASKS)) $(if $(FORMATS),--formats $(FORMATS))
 
 # ── Infrastructure ──────────────────────────────────
+
+.PHONY: infra-init
+infra-init: ## Terraform init (supports local + remote backend)
+	cd infra && terraform init
 
 .PHONY: infra-plan
 infra-plan: ## Terraform plan for dev environment
@@ -73,9 +95,29 @@ infra-apply: ## Terraform apply for dev environment
 docker-build: ## Build Docker image
 	docker build -t documind:latest .
 
+.PHONY: docker-push
+docker-push: docker-build ## Build + push image to ACR
+	az acr login --name $(ACR_NAME)
+	docker tag documind:latest $(ACR_SVR)/documind-api:latest
+	docker push $(ACR_SVR)/documind-api:latest
+
 .PHONY: docker-run
-docker-run: ## Run Docker container
+docker-run: ## Run Docker container locally
 	docker run --env-file .env -p $(PORT):8000 documind:latest
+
+# ── Deployment ──────────────────────────────────────
+
+.PHONY: deploy
+deploy: ## Full deployment via azd up (provision infra + build + push)
+	azd up
+
+.PHONY: provision
+provision: ## Provision Azure infrastructure only
+	azd provision
+
+.PHONY: env-gen
+env-gen: ## Generate .env from Terraform outputs
+	$(PYTHON) scripts/env_from_terraform.py
 
 # ── Utilities ───────────────────────────────────────
 

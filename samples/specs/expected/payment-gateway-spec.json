@@ -1,0 +1,102 @@
+{
+  "document_type": "spec",
+  "source_file": "payment-gateway-spec.txt",
+  "extraction": {
+    "document_title": "Mobile Payment Gateway API",
+    "document_version": "2.1",
+    "author": "Engineering Platform Team, Tailspin Toys",
+    "functional_requirements": [
+      {"id": "FR-001", "text": "Support credit card payments (Visa, Mastercard, Amex) via tokenized card-on-file"},
+      {"id": "FR-002", "text": "Support digital wallet payments (Apple Pay, Google Pay) via platform-native SDKs"},
+      {"id": "FR-003", "text": "Process refunds (full and partial) within the same business day"},
+      {"id": "FR-004", "text": "Support idempotent payment requests using client-generated idempotency key (UUID v4)"},
+      {"id": "FR-005", "text": "Generate unique transaction IDs (format: TXN-{YYYYMMDD}-{UUID})"},
+      {"id": "FR-006", "text": "Support multi-currency transactions with real-time exchange rate lookup"},
+      {"id": "FR-007", "text": "Provide webhook notifications for payment status changes"},
+      {"id": "FR-008", "text": "Support 3D Secure 2.0 authentication for card-not-present transactions"},
+      {"id": "FR-009", "text": "Maintain audit log of all payment operations with tamper-evident hashing"},
+      {"id": "FR-010", "text": "Support recurring payments and subscription billing with configurable intervals"}
+    ],
+    "non_functional_requirements": [
+      {"id": "NFR-001", "text": "99.99% uptime (measured monthly)"},
+      {"id": "NFR-002", "text": "P95 response time ≤ 200ms for payment authorization"},
+      {"id": "NFR-003", "text": "Support 5,000 transactions per second at peak"},
+      {"id": "NFR-004", "text": "Horizontal auto-scaling from 4 to 64 instances"},
+      {"id": "NFR-005", "text": "PCI-DSS Level 1 compliance required"},
+      {"id": "NFR-006", "text": "AES-256 encryption at rest, TLS 1.3 in transit"},
+      {"id": "NFR-007", "text": "Data residency: transaction data must remain in processing region (US, EU, APAC)"},
+      {"id": "NFR-008", "text": "RPO ≤ 0 (synchronous replication), RTO ≤ 5 minutes"},
+      {"id": "NFR-009", "text": "Distributed tracing with correlation IDs across services"},
+      {"id": "NFR-010", "text": "Structured JSON logs with PII masking"}
+    ],
+    "acceptance_criteria": [
+      {"requirement": "FR-001", "criterion": "Card payments processed in sandbox", "method": "Automated"},
+      {"requirement": "FR-002", "criterion": "Wallet payments verified on iOS + Android", "method": "Manual"},
+      {"requirement": "FR-003", "criterion": "Refund reflected in 5 minutes (sandbox)", "method": "Automated"},
+      {"requirement": "FR-004", "criterion": "Duplicate requests return same result", "method": "Automated"},
+      {"requirement": "FR-005", "criterion": "Transaction ID format validated", "method": "Unit test"},
+      {"requirement": "FR-006", "criterion": "3 currency pairs tested (USD/EUR/GBP)", "method": "Automated"},
+      {"requirement": "FR-007", "criterion": "Webhook delivered within 30 seconds", "method": "Automated"},
+      {"requirement": "FR-008", "criterion": "3DS challenge flow completes end-to-end", "method": "Manual"},
+      {"requirement": "NFR-001", "criterion": "Load test sustains 99.99% over 24 hours", "method": "Load test"},
+      {"requirement": "NFR-002", "criterion": "P95 ≤ 200ms under 3,000 TPS load", "method": "Load test"},
+      {"requirement": "NFR-003", "criterion": "Peak load test at 5,000 TPS passes", "method": "Load test"},
+      {"requirement": "NFR-005", "criterion": "PCI-DSS audit report (external assessor)", "method": "Audit"}
+    ],
+    "dependencies": [
+      "Payment Provider Gateway SDK v3.x (Stripe or Adyen)",
+      "Currency Exchange Rate Service (internal microservice)",
+      "Customer Identity Service (OAuth 2.0 / OIDC)",
+      "Event Bus (Apache Kafka 3.5+)",
+      "Secret Management (Azure Key Vault or HashiCorp Vault)",
+      "Certificate Authority for mTLS between services"
+    ],
+    "standards_references": [
+      "PCI-DSS v4.0",
+      "ISO 8583:2023",
+      "ISO 4217",
+      "RFC 7807",
+      "RFC 9457",
+      "OpenAPI Specification 3.1.0",
+      "OWASP API Security Top 10 (2023)"
+    ],
+    "assumptions_constraints": [
+      "Payment providers expose sandbox environments for integration testing",
+      "Customer Identity Service will support token introspection by Q1 2026",
+      "Kafka cluster is pre-provisioned with sufficient partitions",
+      "No PII may be logged or stored outside PCI-scoped environment",
+      "No new third-party dependencies without security team approval",
+      "All changes must pass automated security scanning (SAST + DAST)"
+    ],
+    "glossary": [
+      {"term": "PAN", "definition": "Primary Account Number"},
+      {"term": "3DS", "definition": "3D Secure — cardholder authentication protocol"},
+      {"term": "PCI-DSS", "definition": "Payment Card Industry Data Security Standard"},
+      {"term": "TPS", "definition": "Transactions Per Second"},
+      {"term": "RPO", "definition": "Recovery Point Objective"},
+      {"term": "RTO", "definition": "Recovery Time Objective"},
+      {"term": "mTLS", "definition": "Mutual Transport Layer Security"},
+      {"term": "Idempotency Key", "definition": "Client-supplied unique identifier to prevent duplicate payment processing"}
+    ]
+  },
+  "analysis": {
+    "compliance_assessment": {
+      "overall_rating": "strong",
+      "completeness_score": 0.92,
+      "areas": [
+        {"area": "Functional Coverage", "rating": "excellent", "notes": "10 FRs cover all core payment gateway capabilities"},
+        {"area": "Non-Functional Coverage", "rating": "excellent", "notes": "10 NFRs with specific measurable targets"},
+        {"area": "Security", "rating": "excellent", "notes": "PCI-DSS L1, AES-256, TLS 1.3, PII masking, mTLS, SAST/DAST"},
+        {"area": "Testability", "rating": "good", "notes": "Acceptance criteria are measurable; some FRs lack criteria (FR-009, FR-010)"},
+        {"area": "Standards Compliance", "rating": "excellent", "notes": "References PCI-DSS v4.0, ISO 8583, OWASP Top 10"}
+      ]
+    },
+    "recommendations": [
+      "FR-009 (audit log) and FR-010 (recurring payments) lack explicit acceptance criteria — add them",
+      "NFR-004 specifies auto-scaling 4-64 instances but does not define scaling trigger metrics (CPU, TPS, latency)",
+      "No requirement for graceful degradation — specify behavior when a payment provider is unavailable",
+      "Consider adding a rate limiting requirement to protect against abuse",
+      "Data residency (NFR-007) lists US/EU/APAC but does not specify how region routing is determined"
+    ]
+  }
+}

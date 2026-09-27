@@ -1,0 +1,91 @@
+{
+  "document_type": "spec",
+  "source_file": "inventory-system-spec.txt",
+  "extraction": {
+    "document_title": "Inventory Management System (IMS) — Phase 2",
+    "document_version": "1.3",
+    "author": "Supply Chain Engineering, Wide World Importers",
+    "functional_requirements": [
+      {"id": "FR-101", "text": "Calculate demand forecasts using 24 months of historical sales data per SKU"},
+      {"id": "FR-102", "text": "Generate automated purchase orders when inventory falls below configurable reorder point"},
+      {"id": "FR-103", "text": "Support inter-warehouse stock transfers with approval workflow (single-level < $10K, dual-level ≥ $10K)"},
+      {"id": "FR-104", "text": "Real-time inventory visibility across all 8 warehouses via unified dashboard"},
+      {"id": "FR-105", "text": "Barcode and RFID scanning for receiving, picking, and shipping operations"},
+      {"id": "FR-106", "text": "Calculate optimal safety stock levels per SKU per warehouse (default service level: 95%)"},
+      {"id": "FR-107", "text": "Integrate with SAP S/4HANA for financial posting of inventory movements"},
+      {"id": "FR-108", "text": "Lot tracking and expiry date management for perishable goods"},
+      {"id": "FR-109", "text": "Generate ABC classification reports monthly"},
+      {"id": "FR-110", "text": "Mobile-optimized interfaces for warehouse floor operations"}
+    ],
+    "non_functional_requirements": [
+      {"id": "NFR-101", "text": "Dashboard load within 3 seconds for up to 50,000 SKUs"},
+      {"id": "NFR-102", "text": "Support 200 concurrent warehouse users"},
+      {"id": "NFR-103", "text": "Forecast calculations complete within 15 minutes for ~12,000 active SKUs"},
+      {"id": "NFR-104", "text": "99.5% availability during business hours (6 AM – 10 PM local warehouse time)"},
+      {"id": "NFR-105", "text": "Daily full backup with 30-day retention"},
+      {"id": "NFR-106", "text": "SOC 2 Type II compliance"},
+      {"id": "NFR-107", "text": "OAuth 2.0 authentication and RBAC with warehouse-level scoping"}
+    ],
+    "acceptance_criteria": [
+      {"requirement": "FR-101", "criterion": "Forecast accuracy (MAPE) ≤ 20% on test dataset", "method": "Automated"},
+      {"requirement": "FR-102", "criterion": "PO auto-generated within 5 min of threshold", "method": "Integration"},
+      {"requirement": "FR-103", "criterion": "Transfer approval workflow end-to-end", "method": "Manual"},
+      {"requirement": "FR-104", "criterion": "Dashboard shows data from all 8 warehouses", "method": "Manual"},
+      {"requirement": "FR-106", "criterion": "Safety stock within 10% of analytical solution", "method": "Automated"},
+      {"requirement": "FR-107", "criterion": "SAP posting verified in test environment", "method": "Integration"},
+      {"requirement": "NFR-101", "criterion": "Dashboard load time < 3s (P95, 50K SKUs)", "method": "Load test"},
+      {"requirement": "NFR-103", "criterion": "Full forecast run < 15 min", "method": "Performance"}
+    ],
+    "dependencies": [
+      "SAP S/4HANA Integration Module (RFC/BAPI interfaces)",
+      "Enterprise Service Bus (MuleSoft Anypoint)",
+      "ML Platform for demand forecasting models (Azure ML)",
+      "Barcode/RFID Hardware SDK (Zebra Technologies)",
+      "Identity Provider (Azure AD / Entra ID)"
+    ],
+    "standards_references": [
+      "GS1 General Specifications (barcode standards)",
+      "ISO 22742 (Linear bar code and two-dimensional symbols)",
+      "SOC 2 Type II (AICPA Trust Services Criteria)",
+      "APICS CSCP Body of Knowledge"
+    ],
+    "assumptions_constraints": [
+      "SAP S/4HANA APIs available in test environment by March 2026",
+      "Historical sales data (24 months) cleansed and available in data warehouse",
+      "RFID readers installed at all warehouse dock doors",
+      "Phase 2 must not modify Phase 1 database schema (additive only)",
+      "Budget ceiling: $350,000",
+      "Go-live deadline: August 31, 2026",
+      "No open-source ML frameworks without security review approval"
+    ],
+    "glossary": [
+      {"term": "SKU", "definition": "Stock Keeping Unit — unique product identifier"},
+      {"term": "MAPE", "definition": "Mean Absolute Percentage Error — forecast accuracy metric"},
+      {"term": "Safety Stock", "definition": "Buffer inventory to protect against demand variability"},
+      {"term": "ABC Classification", "definition": "Inventory categorization by value (A=high, C=low)"},
+      {"term": "Reorder Point", "definition": "Inventory level that triggers a replenishment order"},
+      {"term": "RFID", "definition": "Radio-Frequency Identification"},
+      {"term": "BAPI", "definition": "Business Application Programming Interface (SAP)"}
+    ]
+  },
+  "analysis": {
+    "compliance_assessment": {
+      "overall_rating": "good",
+      "completeness_score": 0.85,
+      "areas": [
+        {"area": "Functional Coverage", "rating": "excellent", "notes": "10 FRs covering forecasting, automation, multi-warehouse, scanning, and integration"},
+        {"area": "Non-Functional Coverage", "rating": "good", "notes": "7 NFRs with measurable targets; could add more on data integrity and error handling"},
+        {"area": "Security", "rating": "good", "notes": "SOC 2 + OAuth 2.0 + RBAC is solid; missing data encryption requirements"},
+        {"area": "Testability", "rating": "moderate", "notes": "Acceptance criteria provided for 8 of 17 requirements; FR-105, FR-108, FR-109, FR-110 lack criteria"},
+        {"area": "Standards Compliance", "rating": "good", "notes": "GS1, ISO 22742, SOC 2 referenced; relevant for warehouse/inventory domain"}
+      ]
+    },
+    "recommendations": [
+      "FR-105 (barcode/RFID), FR-108 (lot tracking), FR-109 (ABC reports), FR-110 (mobile UI) lack acceptance criteria — define measurable pass/fail conditions",
+      "No data encryption requirements specified — add at-rest and in-transit encryption NFRs given SOC 2 compliance target",
+      "No explicit error handling or failure recovery requirements — define behavior for SAP integration failures, ML model failures, and scanner disconnections",
+      "Additive-only schema constraint may limit forecasting model flexibility — consider documenting the migration path if schema changes become necessary",
+      "$350K budget for 10 FRs including SAP integration and ML forecasting is aggressive — SAP integration alone typically requires $100K–$200K"
+    ]
+  }
+}

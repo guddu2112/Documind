@@ -1,0 +1,80 @@
+{
+  "document_type": "contract",
+  "source_file": "software-license-agreement.txt",
+  "extraction": {
+    "contract_title": "Software License and Subscription Agreement",
+    "parties": [
+      "Fabrikam Software, Inc. (Licensor)",
+      "Adventure Works Cycles, Ltd. (Licensee)"
+    ],
+    "effective_date": "2026-03-01",
+    "expiration_date": "2029-02-28",
+    "contract_value": "$600,000 USD (first year: $420,000 subscription + $180,000 implementation)",
+    "payment_terms": "Annual subscription fee of $420,000 invoiced on anniversary date. Implementation fee of $180,000 in two equal installments. Annual increases capped at 5% with 90 days' notice.",
+    "key_clauses": [
+      "Intellectual Property — All IP in Software remains with Licensor; no reverse engineering, decompiling, or disassembly permitted",
+      "Data Ownership — All Licensee data remains Licensee property; data export in CSV/JSON within 30 days of termination",
+      "SLA — 99.9% uptime for cloud-hosted components; credits of 5% per 0.1% below target, capped at 30% of monthly fee",
+      "Confidentiality — 3-year obligation; reasonable care standard",
+      "Limitation of Liability — Capped at fees paid in preceding 12 months; no consequential or indirect damages",
+      "Warranties — Software substantially conforms to documentation; excludes unauthorized modifications or third-party integrations"
+    ],
+    "termination_conditions": [
+      "Material breach by either Party with 30 days' written notice and cure period",
+      "Convenience termination by Licensee after initial term with 90 days' notice",
+      "Immediate termination by Licensor for license scope violations (exceeding 500 users, unauthorized copying)",
+      "Licensee must cease use and certify destruction of all copies within 30 days"
+    ],
+    "obligations": [
+      {"party": "Licensor", "obligation": "Provide software updates and patches at no additional cost"},
+      {"party": "Licensor", "obligation": "24/7 technical support (4-hour response for critical, 24-hour for non-critical)"},
+      {"party": "Licensor", "obligation": "Quarterly business reviews"},
+      {"party": "Licensor", "obligation": "12 months advance notice for end-of-life of any component"},
+      {"party": "Licensee", "obligation": "Use Software only as authorized"},
+      {"party": "Licensee", "obligation": "Maintain accurate user counts and report quarterly"},
+      {"party": "Licensee", "obligation": "Install security patches within 30 days of release"},
+      {"party": "Licensee", "obligation": "Not share access credentials or allow unauthorized access"}
+    ],
+    "governing_law": "State of Washington; arbitration in Seattle under AAA rules"
+  },
+  "analysis": {
+    "clauses": [
+      {
+        "clause": "Intellectual Property",
+        "category": "ip_rights",
+        "risk_level": "low",
+        "notes": "Standard for software licensing; Licensor retains full ownership. No risk to Licensee as long as license is maintained."
+      },
+      {
+        "clause": "Data Ownership & Portability",
+        "category": "data_protection",
+        "risk_level": "low",
+        "notes": "Strong data ownership clause; CSV/JSON export within 30 days is favorable. Consider specifying data format schemas."
+      },
+      {
+        "clause": "SLA (99.9%)",
+        "category": "service_level",
+        "risk_level": "medium",
+        "notes": "99.9% allows ~8.7 hours downtime/year. Credit cap of 30% limits financial recourse. No penalty for repeated SLA misses. Consider adding termination right for persistent SLA failures."
+      },
+      {
+        "clause": "Auto-Renewal",
+        "category": "term",
+        "risk_level": "medium",
+        "notes": "Auto-renewal with 90-day opt-out window creates lock-in risk if deadline is missed. Calendar reminders recommended."
+      },
+      {
+        "clause": "Price Escalation",
+        "category": "financial",
+        "risk_level": "medium",
+        "notes": "5% annual cap means subscription could reach $486K by year 3. Over 36-month term, total subscription cost: $1.32M+."
+      },
+      {
+        "clause": "Limitation of Liability",
+        "category": "liability",
+        "risk_level": "high",
+        "notes": "12-month rolling cap means exposure is limited to ~$420K even for catastrophic failures. No carve-outs for data breach or gross negligence — this is unfavorable to Licensee."
+      }
+    ]
+  }
+}

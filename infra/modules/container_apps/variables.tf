@@ -60,6 +60,31 @@ variable "max_replicas" {
   default     = 3
 }
 
+variable "acr_login_server" {
+  type        = string
+  description = "ACR login server URL for image pull"
+  default     = ""
+}
+
+variable "acr_identity" {
+  type        = string
+  description = "Identity type for ACR pull (system for managed identity)"
+  default     = "system"
+}
+
+variable "acr_admin_username" {
+  type        = string
+  description = "ACR admin username for image pull"
+  default     = ""
+}
+
+variable "acr_admin_password" {
+  type        = string
+  description = "ACR admin password for image pull"
+  default     = ""
+  sensitive   = true
+}
+
 variable "env_vars" {
   type        = map(string)
   description = "Environment variables for the container"

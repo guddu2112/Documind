@@ -113,6 +113,17 @@ variable "enable_container_apps" {
   default     = false
 }
 
+variable "acr_sku" {
+  type        = string
+  description = "SKU for Azure Container Registry (Basic for dev, Standard for prod)"
+  default     = "Basic"
+
+  validation {
+    condition     = contains(["Basic", "Standard", "Premium"], var.acr_sku)
+    error_message = "ACR SKU must be one of: Basic, Standard, Premium."
+  }
+}
+
 variable "enable_private_endpoints" {
   type        = bool
   description = "Whether to enable private endpoints for all services (for production)"

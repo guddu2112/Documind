@@ -17,6 +17,11 @@ resource "azurerm_container_app" "api" {
     type = "SystemAssigned"
   }
 
+  secret {
+    name  = "acr-password"
+    value = var.acr_admin_password
+  }
+
   template {
     min_replicas = var.min_replicas
     max_replicas = var.max_replicas
@@ -34,6 +39,15 @@ resource "azurerm_container_app" "api" {
           value = env.value
         }
       }
+    }
+  }
+
+  dynamic "registry" {
+    for_each = var.acr_login_server != "" ? [1] : []
+    content {
+      server               = var.acr_login_server
+      username             = var.acr_admin_username
+      password_secret_name = "acr-password"
     }
   }
 

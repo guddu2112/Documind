@@ -1,0 +1,71 @@
+REQUEST FOR PROPOSAL
+Enterprise Data Analytics Platform
+RFP-2026-0087
+
+Issued by: Contoso Financial Services, Ltd.
+Date: February 1, 2026
+
+1. INTRODUCTION
+
+Contoso Financial Services, Ltd. ("Contoso") invites qualified technology
+firms to submit proposals for the design, implementation, and deployment
+of an enterprise-wide data analytics platform. The platform shall enable
+real-time reporting, predictive analytics, and regulatory compliance
+reporting across all business units.
+
+2. ISSUING ORGANIZATION
+
+Contoso Financial Services, Ltd.
+500 Financial Plaza
+New York, NY 10004
+Contact: James Rodriguez, Chief Data Officer
+Email: j.rodriguez@contoso-financial.example.com
+
+3. SUBMISSION DEADLINE
+
+Proposals must be received by: March 28, 2026, 11:59 PM Eastern Time.
+
+4. SCOPE OF WORK
+
+  a) Design a unified data lakehouse architecture consolidating data
+     from 12 source systems (core banking, CRM, trading, risk, compliance).
+  b) Implement real-time data ingestion pipelines processing approximately
+     50 million events per day.
+  c) Build a self-service analytics layer with governed data catalog.
+  d) Create 25 executive dashboards and 40 operational reports.
+  e) Implement ML model serving infrastructure for fraud detection and
+     credit scoring models.
+  f) Ensure SOX, PCI-DSS, and GDPR compliance throughout.
+
+5. REQUIREMENTS
+
+  R1. Platform must support sub-second query response for dashboards.
+  R2. Data retention policy: 7 years for transactional data.
+  R3. Role-based access control with column-level security.
+  R4. Automated data quality checks with alerting.
+  R5. Support for both batch (hourly) and streaming (real-time) pipelines.
+  R6. Disaster recovery with RPO < 1 hour and RTO < 4 hours.
+
+6. EVALUATION CRITERIA
+
+  Technical Architecture & Scalability    30%
+  Financial Services Domain Experience    25%
+  Data Governance & Compliance            20%
+  Cost Effectiveness                      15%
+  Support & SLA Commitments               10%
+
+7. BUDGET RANGE
+
+$2,000,000 to $3,500,000 USD for initial implementation.
+Ongoing annual support budget: $400,000 to $600,000 USD.
+
+8. CONTRACT DURATION
+
+24-month implementation phase followed by a 36-month managed services
+agreement.
+
+9. POINT OF CONTACT
+
+James Rodriguez, Chief Data Officer
+j.rodriguez@contoso-financial.example.com
+(212) 555-0198

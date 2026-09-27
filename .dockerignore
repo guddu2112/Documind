@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+.mypy_cache
+.pytest_cache
+.ruff_cache
+
+# Node (web/ has its own build stage)
+web/node_modules
+
+# Infrastructure
+infra/
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tests & docs
+tests/
+docs/
+*.md
+!README.md
+
+# Environment files
+.env
+.env.*
+
+# OS
+Thumbs.db
+.DS_Store

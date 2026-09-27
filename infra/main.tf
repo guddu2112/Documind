@@ -119,6 +119,17 @@ module "cosmos_db" {
 
 # --- Container Apps (optional — gated by feature toggle) ---
 
+module "acr" {
+  count  = var.enable_container_apps ? 1 : 0
+  source = "./modules/acr"
+
+  name_prefix         = local.name_prefix
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  sku                 = var.acr_sku
+  tags                = local.common_tags
+}
+
 module "container_apps" {
   count  = var.enable_container_apps ? 1 : 0
   source = "./modules/container_apps"
@@ -129,14 +140,21 @@ module "container_apps" {
   log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   tags                       = local.common_tags
 
+  container_image    = "${module.acr[0].login_server}/documind-api:latest"
+  acr_login_server   = module.acr[0].login_server
+  acr_admin_username = module.acr[0].admin_username
+  acr_admin_password = module.acr[0].admin_password
+
   env_vars = {
-    AZURE_OPENAI_ENDPOINT               = module.ai_services.endpoint
+    AZURE_OPENAI_ENDPOINT                = module.ai_services.endpoint
     AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = module.document_intelligence.endpoint
     AZURE_SEARCH_ENDPOINT                = var.enable_ai_search ? module.ai_search[0].endpoint : ""
     AZURE_COSMOS_ENDPOINT                = module.cosmos_db.endpoint
     AZURE_STORAGE_ACCOUNT_NAME           = module.storage.name
     AZURE_KEYVAULT_URL                   = module.keyvault.vault_uri
     APPLICATIONINSIGHTS_CONNECTION_STRING = module.monitoring.application_insights_connection_string
+    AZURE_FOUNDRY_PROJECT_ENDPOINT       = module.ai_services.endpoint
+    AZURE_FOUNDRY_PROJECT_DEPLOYMENT_NAME = var.gpt_model_name
   }
 }
 
@@ -176,6 +194,12 @@ module "identity" {
         scope        = module.keyvault.id
         description  = "Allow API to read Key Vault secrets"
       },
+      {
+        principal_id = module.container_apps[0].api_identity_principal_id
+        role_name    = "AcrPull"
+        scope        = module.acr[0].id
+        description  = "Allow API to pull images from ACR"
+      },
     ],
     # AI Search RBAC — only when AI Search is provisioned
     var.enable_ai_search ? [
@@ -187,4 +211,14 @@ module "identity" {
       },
     ] : [],
   )
+}
+
+# Cosmos DB data-plane RBAC (not ARM-level — uses Cosmos DB's own role system)
+resource "azurerm_cosmosdb_sql_role_assignment" "api_data_contributor" {
+  count               = var.enable_container_apps ? 1 : 0
+  resource_group_name = module.resource_group.name
+  account_name        = module.cosmos_db.name
+  role_definition_id  = "${module.cosmos_db.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+  principal_id        = module.container_apps[0].api_identity_principal_id
+  scope               = module.cosmos_db.id
 }

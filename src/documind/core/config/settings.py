@@ -62,9 +62,19 @@ class Settings(BaseSettings):
     chunker_max_tokens: int = Field(8000, description="Max tokens per chunk for LLM analysis.")
     chunker_overlap_tokens: int = Field(200, description="Overlap tokens between consecutive chunks.")
 
+    # ---- Embedding ----
+    embedding_model: str = Field("text-embedding-3-small", description="Embedding model deployment name.")
+    embedding_dimensions: int = Field(1536, description="Embedding vector dimensions (must match model).")
+
+    # ---- Cosmos DB Vector Search ----
+    cosmos_search_container: str = Field("search_index", description="Cosmos DB container for vector search index.")
+
+    # ---- LLM Parameters ----
+    llm_temperature: float = Field(0.2, ge=0.0, le=2.0, description="Temperature for LLM completions.")
+
     # ---- OpenAI (used by analysis tools & MCP) ----
     azure_openai_key: str = Field("", description="Azure OpenAI API key.")
-    azure_openai_api_version: str = Field("2024-06-01", description="Azure OpenAI API version.")
+    azure_openai_api_version: str = Field("2024-12-01-preview", description="Azure OpenAI API version.")
     azure_openai_deployment: str = Field("gpt-4o", description="Azure OpenAI deployment name.")
 
 

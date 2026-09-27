@@ -1,0 +1,81 @@
+{
+  "document_type": "contract",
+  "source_file": "professional-services-agreement.txt",
+  "extraction": {
+    "contract_title": "Professional Services Agreement",
+    "parties": [
+      "Alpine Solutions Group, LLC (Provider)",
+      "Woodgrove Bank, N.A. (Client)"
+    ],
+    "effective_date": "2026-01-15",
+    "expiration_date": "2027-01-14",
+    "contract_value": "$650,000 USD",
+    "payment_terms": "20% upon execution ($130,000), 30% upon Phase 1 completion ($195,000), 30% upon Phase 2 completion ($195,000), 20% upon final acceptance ($130,000). Net 30. Late payments at 1.5%/month.",
+    "key_clauses": [
+      "Confidentiality — 5-year obligation covering technical data, trade secrets, customer lists, financial information",
+      "Intellectual Property — Pre-existing IP stays with owner; Deliverables owned by Client upon full payment; Provider retains tools/frameworks/methodologies",
+      "Indemnification — Mutual; Provider for negligence/misconduct, Client for misuse of Deliverables",
+      "Limitation of Liability — Capped at $650,000 (total contract value); no consequential damages except for gross negligence/willful misconduct",
+      "Data Protection — GLBA, CCPA compliance; appropriate technical and organizational measures required"
+    ],
+    "termination_conditions": [
+      "Convenience termination by either Party with 60 days' written notice",
+      "Immediate termination for material breach with 30 days' cure period",
+      "Immediate termination by Client if Provider undergoes change of control, bankruptcy, or insolvency",
+      "Work-in-progress and Deliverables due within 15 business days of termination"
+    ],
+    "obligations": [
+      {"party": "Provider", "obligation": "Assign dedicated project manager and technical lead"},
+      {"party": "Provider", "obligation": "Provide weekly status reports and monthly executive summaries"},
+      {"party": "Provider", "obligation": "Maintain professional liability insurance ≥ $2,000,000"},
+      {"party": "Provider", "obligation": "All personnel must pass background checks"},
+      {"party": "Provider", "obligation": "Comply with Client's information security policies"},
+      {"party": "Client", "obligation": "Provide timely access to systems, environments, and personnel"},
+      {"party": "Client", "obligation": "Designate a project sponsor and technical point of contact"},
+      {"party": "Client", "obligation": "Review and provide feedback on deliverables within 10 business days"},
+      {"party": "Client", "obligation": "Provide test data and test environments"},
+      {"party": "Client", "obligation": "Execute change orders for scope modifications"}
+    ],
+    "governing_law": "State of Illinois; binding arbitration in Chicago, Illinois"
+  },
+  "analysis": {
+    "clauses": [
+      {
+        "clause": "Confidentiality",
+        "category": "data_protection",
+        "risk_level": "low",
+        "notes": "Standard 5-year term; covers appropriate categories; mutual obligation"
+      },
+      {
+        "clause": "Intellectual Property",
+        "category": "ip_rights",
+        "risk_level": "medium",
+        "notes": "Provider retains pre-existing tools and methodologies — Client should ensure Deliverables can function independently without Provider's proprietary tools"
+      },
+      {
+        "clause": "Indemnification",
+        "category": "liability",
+        "risk_level": "low",
+        "notes": "Mutual and balanced; Provider covers negligence, Client covers misuse"
+      },
+      {
+        "clause": "Limitation of Liability",
+        "category": "liability",
+        "risk_level": "medium",
+        "notes": "Cap at total contract value ($650K) is standard. Carve-out for gross negligence/willful misconduct is favorable to Client"
+      },
+      {
+        "clause": "Data Protection",
+        "category": "compliance",
+        "risk_level": "medium",
+        "notes": "GLBA and CCPA referenced but no specific technical standards (e.g., encryption requirements, SOC 2) are mandated. Given banking context, stronger technical controls should be specified"
+      },
+      {
+        "clause": "Termination for Convenience",
+        "category": "termination",
+        "risk_level": "low",
+        "notes": "60-day notice period is reasonable and mutual"
+      }
+    ]
+  }
+}

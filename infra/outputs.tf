@@ -5,6 +5,11 @@ output "resource_group_name" {
   value       = module.resource_group.name
 }
 
+output "AZURE_RESOURCE_GROUP" {
+  description = "Resource group name (azd convention)"
+  value       = module.resource_group.name
+}
+
 # --- AI Services (Azure OpenAI) ---
 
 output "ai_services_endpoint" {
@@ -80,4 +85,32 @@ output "application_insights_connection_string" {
 output "api_url" {
   description = "API endpoint URL (if Container Apps enabled)"
   value       = var.enable_container_apps ? module.container_apps[0].api_url : null
+}
+
+output "API_URL" {
+  description = "API endpoint URL (azd convention)"
+  value       = var.enable_container_apps ? module.container_apps[0].api_url : null
+}
+
+# --- Container Registry (conditional) ---
+
+output "acr_login_server" {
+  description = "ACR login server URL (if Container Apps enabled)"
+  value       = var.enable_container_apps ? module.acr[0].login_server : null
+}
+
+output "acr_name" {
+  description = "ACR name (if Container Apps enabled)"
+  value       = var.enable_container_apps ? module.acr[0].name : null
+}
+
+# azd hook outputs — uppercase so `azd env get-value` finds them
+output "ACR_LOGIN_SERVER" {
+  description = "ACR login server (for azd hooks)"
+  value       = var.enable_container_apps ? module.acr[0].login_server : null
+}
+
+output "ACR_NAME" {
+  description = "ACR name (for azd hooks)"
+  value       = var.enable_container_apps ? module.acr[0].name : null
 }

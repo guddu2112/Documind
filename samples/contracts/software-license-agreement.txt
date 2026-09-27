@@ -1,0 +1,124 @@
+SOFTWARE LICENSE AND SUBSCRIPTION AGREEMENT
+
+Agreement Number: SLA-2026-1143
+Effective Date: March 1, 2026
+
+PARTIES:
+
+  LICENSOR:   Fabrikam Software, Inc.
+              2000 Tech Campus Way, Redmond, WA 98052
+
+  LICENSEE:   Adventure Works Cycles, Ltd.
+              100 Manufacturing Lane, Portland, OR 97201
+
+─────────────────────────────────────────────────────────────────────────
+
+1. LICENSED SOFTWARE
+
+Licensor grants Licensee a non-exclusive, non-transferable license to
+use the following software products:
+
+  - Fabrikam ERP Suite v12.0 (Enterprise Edition)
+  - Fabrikam Analytics Module v4.2
+  - Fabrikam Supply Chain Connector v3.1
+
+for a maximum of 500 named users across Licensee's organization.
+
+2. CONTRACT VALUE AND PAYMENT TERMS
+
+  2.1 Annual Subscription Fee: $420,000 USD
+  2.2 One-time Implementation Fee: $180,000 USD
+  2.3 Total First-Year Cost: $600,000 USD
+  2.4 Payment: Annual subscription fee invoiced on anniversary date.
+      Implementation fee payable in two equal installments.
+  2.5 Price adjustments: Annual subscription may increase by no more
+      than 5% per year with 90 days' advance written notice.
+
+3. TERM AND RENEWAL
+
+  3.1 Initial term: 36 months (March 1, 2026 – February 28, 2029).
+  3.2 Auto-renewal for successive 12-month periods unless either Party
+      provides written notice of non-renewal at least 90 days before
+      the end of the then-current term.
+  3.3 Expiration Date: February 28, 2029 (initial term).
+
+4. KEY CLAUSES
+
+  4.1 INTELLECTUAL PROPERTY
+      All intellectual property rights in the Software remain with
+      Licensor. Licensee receives only the rights expressly granted
+      herein. Licensee shall not reverse engineer, decompile, or
+      disassemble the Software.
+
+  4.2 DATA OWNERSHIP
+      All data entered into the Software by Licensee remains the
+      exclusive property of Licensee. Upon termination, Licensor shall
+      provide data export in standard formats (CSV, JSON) within 30
+      days.
+
+  4.3 SERVICE LEVEL AGREEMENT
+      Licensor guarantees 99.9% uptime for cloud-hosted components,
+      measured monthly. Credits: 5% of monthly fee for each 0.1%
+      below target, capped at 30% of monthly fee.
+
+  4.4 CONFIDENTIALITY
+      Each Party shall protect Confidential Information using the same
+      degree of care it uses for its own confidential information, but
+      no less than reasonable care, for three (3) years after
+      disclosure.
+
+  4.5 LIMITATION OF LIABILITY
+      Licensor's total aggregate liability shall not exceed the fees
+      paid by Licensee in the twelve (12) months preceding the claim.
+      Neither Party shall be liable for consequential or indirect
+      damages.
+
+  4.6 WARRANTIES
+      Licensor warrants that the Software will substantially conform
+      to its published documentation for the duration of the license
+      term. This warranty does not cover defects caused by unauthorized
+      modifications or third-party integrations.
+
+5. TERMINATION CONDITIONS
+
+  5.1 Either Party may terminate for material breach with 30 days'
+      written notice and opportunity to cure.
+  5.2 Licensee may terminate for convenience after the initial term
+      with 90 days' written notice.
+  5.3 Licensor may terminate immediately if Licensee violates the
+      license scope (e.g., exceeds 500 users, unauthorized copying).
+  5.4 Upon termination, Licensee shall cease all use of the Software
+      and certify destruction of all copies within 30 days.
+
+6. OBLIGATIONS
+
+  Licensor Obligations:
+    - Provide software updates and patches at no additional cost
+    - Maintain 24/7 technical support (response within 4 hours for
+      critical issues, 24 hours for non-critical)
+    - Conduct quarterly business reviews
+    - Notify Licensee of end-of-life for any component 12 months
+      in advance
+
+  Licensee Obligations:
+    - Use the Software only as authorized under this Agreement
+    - Maintain accurate user counts and report quarterly
+    - Install security patches within 30 days of release
+    - Not share access credentials or allow unauthorized access
+
+7. GOVERNING LAW
+
+This Agreement shall be governed by the laws of the State of
+Washington. Disputes shall be resolved by arbitration in Seattle,
+Washington, under the rules of the American Arbitration Association.
+
+─────────────────────────────────────────────────────────────────────────
+
+AGREED AND ACCEPTED:
+
+FABRIKAM SOFTWARE, INC.            ADVENTURE WORKS CYCLES, LTD.
+
+By: _________________________      By: _________________________
+Name: Lisa Tanaka                  Name: Robert Chen
+Title: VP, Enterprise Sales        Title: CTO
+Date: March 1, 2026               Date: March 1, 2026

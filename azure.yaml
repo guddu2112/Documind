@@ -6,7 +6,7 @@ metadata:
 
 services:
   api:
-    project: ./src
+    project: .
     language: python
     host: containerapp
     docker:
@@ -16,6 +16,20 @@ services:
 infra:
   provider: terraform
   path: ./infra
+
+hooks:
+  # Build & push container image to ACR after infra is provisioned
+  postprovision:
+    posix:
+      shell: sh
+      run: ./hooks/postprovision.sh
+      interactive: true
+      continueOnError: false
+    windows:
+      shell: pwsh
+      run: ./hooks/postprovision.ps1
+      interactive: true
+      continueOnError: false
 
 pipeline:
   provider: github

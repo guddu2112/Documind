@@ -125,14 +125,108 @@
 
 ### Phase 5 — Packaging as Accelerator (Weeks 6–7)
 
+**Goal:** `azd up` provisions all Azure infra, builds the Docker image, pushes to ACR, deploys to Container Apps, and outputs a working API URL — in one command.
+
+#### 5A — Infrastructure: ACR + Container Apps Enablement
+
 | # | Task | Details | Owner | Status |
 |---|------|---------|-------|--------|
-| 5.1 | Parameterize for pluggability | Environment-specific configs, doc type schemas as plug-in configs, custom model registry. | Architect | ☐ |
-| 5.2 | Create deployment automation | `azd` template with `azure.yaml`, one-command provisioning + deployment. | DevOps | ☐ |
-| 5.3 | Write accelerator documentation | Architecture guide, setup guide, customization guide, doc-type extension guide. | Tech Writer | ☐ |
-| 5.4 | Build sample document packs | Sample RFPs, contracts, specs with expected outputs for client demos. | AI/ML Dev | ☐ |
-| 5.5 | Build review dashboard (optional) | Lightweight Streamlit/Gradio demo UI for client presentations. Upload, status, results viewer. Not production UI — clients integrate via API. | Frontend Dev | ☐ |
-| 5.6 | Create onboarding runbook | Step-by-step client engagement playbook: fork → configure → deploy → customize. | Architect | ☐ |
+| 5A.1 | Create ACR Terraform module | New `infra/modules/acr/` — Azure Container Registry (Basic SKU for dev, Standard for prod), admin auth disabled, outputs `login_server` and `id`. | DevOps | ☐ |
+| 5A.2 | Wire ACR into `main.tf` | Add `module "acr"` block (gated by `enable_container_apps` — if you deploy containers, you need a registry). Pass `acr_login_server` to Container Apps module. | DevOps | ☐ |
+| 5A.3 | Update Container Apps module for ACR pull | Add ACR `registry` block to `azurerm_container_app` so it can pull images. Add `AcrPull` role assignment to Container App managed identity. | DevOps | ☐ |
+| 5A.4 | Add Cosmos DB RBAC for Container App | Add `Cosmos DB Built-in Data Contributor` role assignment in `identity` module — currently missing, container can't write to Cosmos. | DevOps | ☐ |
+| 5A.5 | Enable Container Apps in dev | Set `enable_container_apps = true` in `dev.tfvars`. Add `acr_sku = "Basic"` for dev, `acr_sku = "Standard"` for prod. | DevOps | ☐ |
+| 5A.6 | Add Foundry project env vars | Add `AZURE_FOUNDRY_PROJECT_ENDPOINT` and `AZURE_FOUNDRY_PROJECT_DEPLOYMENT_NAME` to Container Apps `env_vars` map — currently missing, analysis agent won't work in container. | DevOps | ☐ |
+
+#### 5B — Dockerfile Hardening & MCP Mount
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5B.1 | Multi-stage Docker build | Stage 1 (`builder`): install deps. Stage 2 (`runtime`): copy only site-packages + source. Reduces image size ~40%. | DevOps | ☐ |
+| 5B.2 | Non-root user | Add `appuser` (UID 1000), switch `USER appuser` before `CMD`. Required for production security. | DevOps | ☐ |
+| 5B.3 | Docker health check | Add `HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1`. Container Apps uses this for readiness. | DevOps | ☐ |
+| 5B.4 | Include web static build (optional) | Add npm build stage, copy `web/dist/` into image. FastAPI serves static files at `/` if present. Enables single-container deployment with UI. | DevOps | ☐ |
+| 5B.5 | `.dockerignore` | Exclude `.venv/`, `infra/`, `.git/`, `tests/`, `samples/`, `node_modules/`, `*.tfstate` from build context. | DevOps | ☐ |
+| 5B.6 | Mount MCP server on FastAPI `/mcp` | Mount `mcp.streamable_http_app()` as a sub-application on the main FastAPI app at `/mcp`. Single container serves REST API + MCP. Local `stdio` transport preserved for desktop agents (`make mcp`). CORS already configured. | Backend Dev | ☐ |
+| 5B.7 | Add MCP Makefile target for local HTTP | Add `make mcp-http` target that starts the combined FastAPI + MCP server for local testing (replaces standalone `--http` mode). | DevOps | ☐ |
+
+#### 5C — `azd up` End-to-End Wiring
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5C.1 | Update `azure.yaml` | Add `hooks.preprovision` (validate `az` login, set subscription), `hooks.postprovision` (generate `.env` from Terraform outputs, push Docker image to ACR). Update service config with `image` registry reference. | DevOps | ☐ |
+| 5C.2 | Create `scripts/env_from_terraform.py` | Runs `terraform output -json`, maps outputs to `.env` vars. Used by `azd` postprovision hook and local dev (`make env-gen`). | DevOps | ☐ |
+| 5C.3 | Create `azd` hooks scripts | `scripts/azd-preprovision.sh` (login check, subscription validation), `scripts/azd-postprovision.sh` (Docker build + ACR push + env gen). Windows `.ps1` variants. | DevOps | ☐ |
+| 5C.4 | Wire Terraform outputs for azd | Ensure all needed outputs exist: `acr_login_server`, `container_app_url`, `resource_group_name`, all service endpoints. Verify `infra/outputs.tf` is complete. | DevOps | ☐ |
+
+#### 5D — Parameterization & Config
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5D.1 | Make chunker fully config-driven | Move `_CHARS_PER_TOKEN = 4` to `settings.py`. Wire `DocumentChunker` to read from settings in pipeline. | Backend Dev | ☐ |
+| 5D.2 | Make embedding dimensions configurable | Move `EMBEDDING_DIMENSIONS = 1536` (if hardcoded anywhere) to `settings.py`. | Backend Dev | ☐ |
+| 5D.3 | Validate all hardcoded defaults | Audit `settings.py` defaults (container names, index names, database names) — ensure all are overridable via env vars without code changes. | Backend Dev | ☐ |
+
+#### 5E — Makefile Deployment Targets
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5E.1 | Add `make deploy` | Runs `azd up` — single command for full deployment. | DevOps | ☐ |
+| 5E.2 | Add `make docker-push` | Build image + push to ACR (reads `ACR_LOGIN_SERVER` from `.env` or Terraform output). | DevOps | ☐ |
+| 5E.3 | Add `make infra-init` | `cd infra && terraform init` (supports both local and remote backend). | DevOps | ☐ |
+| 5E.4 | Add `make env-gen` | Run `scripts/env_from_terraform.py` to regenerate `.env` from current Terraform state. | DevOps | ☐ |
+| 5E.5 | Add `make dev` | Launch both backend (port 8000) and frontend (port 3000) in parallel for local development. | DevOps | ☐ |
+
+#### 5F — Documentation & Onboarding
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5F.1 | Write setup guide | Prerequisites (Python 3.11+, Node 18+, Azure CLI, `azd`, Terraform), `azd up` walkthrough, verify deployment. | Tech Writer | ☐ |
+| 5F.2 | Write architecture guide | System diagram, agent responsibilities, data flow, Azure service mapping, Terraform module layout. | Architect | ☐ |
+| 5F.3 | Write customization guide | Add doc types, tune prompts, configure models, adjust chunking, extend search mappings. (Mostly done — `add_new_doc_type_in_documind.md`.) | Tech Writer | ☐ |
+| 5F.4 | Create onboarding runbook | Client engagement playbook: fork repo → `azd up` → upload sample docs → customize doc types → handoff. Include estimated times per step. | Architect | ☐ |
+| 5F.5 | Update README.md | Rewrite with: quick-start (`azd up`), architecture diagram, feature list (multi-agent pipeline, MCP server, React UI, pluggable doc types), API endpoints, MCP endpoint (`/mcp`), local dev instructions (`make dev`, `make mcp`), Terraform module table, env var reference, link to guides. Remove outdated known limitations (task dispatch, no auth — now fixed). Add ACR + Container Apps to services list. | Tech Writer | ☐ |
+
+#### 5G — Sample Data & Demo
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5G.1 | Build sample document packs | 2–3 sample files per doc type (RFP, Contract, Spec) in `samples/`. Public-domain or synthetic documents only. | AI/ML Dev | ☐ |
+| 5G.2 | Generate expected outputs | Run pipeline on sample docs, capture extraction + analysis JSON as `samples/{type}/expected/` for validation and demos. | AI/ML Dev | ☐ |
+| 5G.3 | Web UI as demo dashboard | React SPA already built (✅). Ensure it works with `azd` deployed Container App URL via env var or runtime config. | Frontend Dev | ☐ |
+
+#### 5H — CI/CD Pipeline (Optional, P2)
+
+| # | Task | Details | Owner | Status |
+|---|------|---------|-------|--------|
+| 5H.1 | GitHub Actions workflow | `.github/workflows/ci.yml` — lint → test → build Docker → push ACR → deploy Container Apps. Triggered on push to `main`. | DevOps | ☐ |
+| 5H.2 | PR validation workflow | `.github/workflows/pr.yml` — lint + test only. No deploy. Triggered on PR to `main`. | DevOps | ☐ |
+
+---
+
+### Phase 5 — Execution Order
+
+```
+5A (ACR + Container Apps)  ←── Must be first: infra foundation
+    │
+    ├──▶ 5B (Dockerfile)   ←── Needs ACR target to validate push
+    │
+    ├──▶ 5C (azd wiring)   ←── Needs ACR + Container Apps + Dockerfile
+    │
+    ├──▶ 5D (Config)       ←── Independent, can parallel with 5A
+    │
+    ├──▶ 5E (Makefile)     ←── Depends on 5C for deploy targets
+    │
+    ├──▶ 5F (Docs)         ←── After 5A–5E are stable
+    │
+    ├──▶ 5G (Samples)      ←── Independent, can parallel
+    │
+    └──▶ 5H (CI/CD)        ←── Last: needs everything else in place
+```
+
+**Critical path for one-command deployment:** 5A → 5B → 5C → 5E.1
+
+**Total tasks:** 32 (24 required, 8 optional/P2)
 
 ---
 
@@ -143,12 +237,13 @@
 | Azure AI Foundry | Agent hosting, model catalog, evaluation | Standard |
 | Azure OpenAI (GPT-4o) | Analysis, summarization, reasoning | Pay-as-you-go |
 | Azure Document Intelligence | OCR, layout, key-value, table extraction | S0 |
+| Azure Container Registry | Docker image storage for Container Apps | Basic (dev) / Standard (prod) |
+| Azure Container Apps | API + MCP hosting, auto-scale, managed identity | Consumption |
 | Azure AI Search | ~~Semantic search, vector index, skillsets~~ — deferred (`enable_ai_search = false`). Cosmos DB vector search used instead. | Standard (when enabled) |
 | Azure Blob Storage | Raw & processed document storage | StorageV2 / Hot |
 | Azure Cosmos DB | Pipeline state, metadata, audit trail, **vector search** | Serverless |
 | Azure Key Vault | Secrets, connection strings | Standard |
 | Azure Monitor + App Insights | Observability, tracing, dashboards | Pay-as-you-go |
-| Azure Container Apps / App Service | API hosting | Consumption / S1 |
 
 ---
 

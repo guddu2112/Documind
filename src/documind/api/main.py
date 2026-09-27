@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -150,15 +151,34 @@ def create_app() -> FastAPI:
     from documind.api.endpoints.search import router as search_router
     from documind.api.endpoints.events import router as events_router
 
-    # ── Root redirect ───────────────────────────────────────────
-    @app.get("/", include_in_schema=False)
-    async def root():
-        return RedirectResponse(url="/docs")
+    # ── Root redirect (only when frontend isn't built) ──────────
+    _static_dir = Path("static")
+    if not _static_dir.is_dir():
+        @app.get("/", include_in_schema=False)
+        async def root():
+            return RedirectResponse(url="/docs")
 
     app.include_router(health_router, tags=["health"])
     app.include_router(documents_router, prefix="/documents", tags=["documents"])
     app.include_router(search_router, prefix="/search", tags=["search"])
     app.include_router(events_router, tags=["events"])
+
+    # ── MCP server (Streamable HTTP at /mcp) ────────────────────
+    try:
+        from documind.mcp.server import mcp as mcp_server
+
+        mcp_server.settings.streamable_http_path = "/"
+        app.mount("/mcp", mcp_server.streamable_http_app())
+        logger.info("MCP server mounted at /mcp")
+    except Exception:
+        logger.warning("MCP server mount failed — MCP endpoint disabled", exc_info=True)
+
+    # ── Frontend static files (populated by Docker build) ───────
+    if _static_dir.is_dir():
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=_static_dir, html=True), name="frontend")
+        logger.info("Serving frontend from %s", _static_dir.resolve())
 
     return app
 
