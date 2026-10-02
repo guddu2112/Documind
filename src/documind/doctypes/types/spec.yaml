@@ -13,6 +13,8 @@ supported_formats:
   - docx
   - pptx
   - xlsx
+  - txt
+  - md
 
 doc_intelligence_model: prebuilt-layout
 

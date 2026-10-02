@@ -95,3 +95,14 @@ class CosmosService:
                 query=query, parameters=params, max_item_count=max_items
             )
         )
+
+    def query_by_document_id(self, document_id: str) -> Optional[dict[str, Any]]:
+        """Cross-partition lookup by document_id (partition key unknown)."""
+        items = list(
+            self._container.query_items(
+                query="SELECT * FROM c WHERE c.document_id = @id",
+                parameters=[{"name": "@id", "value": document_id}],
+                enable_cross_partition_query=True,
+            )
+        )
+        return items[0] if items else None

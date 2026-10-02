@@ -150,6 +150,7 @@ def create_app() -> FastAPI:
     from documind.api.endpoints.health import router as health_router
     from documind.api.endpoints.search import router as search_router
     from documind.api.endpoints.events import router as events_router
+    from documind.api.endpoints.ask import router as ask_router
 
     # ── Root redirect (only when frontend isn't built) ──────────
     _static_dir = Path("static")
@@ -161,6 +162,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, tags=["health"])
     app.include_router(documents_router, prefix="/documents", tags=["documents"])
     app.include_router(search_router, prefix="/search", tags=["search"])
+    app.include_router(ask_router, prefix="/ask", tags=["ask"])
     app.include_router(events_router, tags=["events"])
 
     # ── MCP server (Streamable HTTP at /mcp) ────────────────────

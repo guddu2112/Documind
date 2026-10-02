@@ -24,9 +24,18 @@ import logging
 from typing import Any, Callable
 
 from documind.agents.analysis.task_registry import register_task
+from documind.core.config.settings import settings
 from documind.core.models.base import AnalysisResult, RiskItem, RiskSeverity
 from documind.doctypes.schema import AnalysisTaskConfig
 from documind.services.prompt_loader import PromptLoader
+
+
+def _truncate_for_llm(text: str) -> str:
+    """Cap LLM input length so CPU inference stays tractable."""
+    limit = settings.llm_max_input_chars
+    if limit <= 0 or len(text) <= limit:
+        return text
+    return text[:limit] + "\n\n[... document truncated for length ...]"
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +48,9 @@ def _safe_parse_json(text: str) -> dict[str, Any]:
     """Attempt to parse JSON from the LLM response.
 
     LLMs sometimes wrap JSON in markdown code fences — strip those first.
-    Falls back to returning the raw text in a dict if parsing fails.
+    If the response was truncated (common on local CPU inference), try
+    salvaging by closing unbalanced brackets/braces.  Falls back to
+    returning the raw text in a dict if parsing still fails.
     """
     cleaned = text.strip()
     # Remove markdown code fences if present
@@ -51,8 +62,41 @@ def _safe_parse_json(text: str) -> dict[str, Any]:
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
-        logger.warning("LLM response was not valid JSON, returning raw text")
-        return {"raw_response": text}
+        pass
+
+    # Try to salvage a truncated JSON object: strip anything after the
+    # last complete key/value pair and close open brackets.
+    salvaged = _try_salvage_json(cleaned)
+    if salvaged is not None:
+        logger.warning("LLM response was truncated JSON; salvaged partial result")
+        return salvaged
+
+    logger.warning("LLM response was not valid JSON, returning raw text")
+    return {"raw_response": text}
+
+
+def _try_salvage_json(text: str) -> dict[str, Any] | None:
+    """Best-effort recovery of a truncated JSON object.
+
+    Walks the string looking for the last position that yields a valid
+    parse when we append the required closing brackets.
+    """
+    if not text.startswith("{"):
+        return None
+
+    # Track bracket depths so we can close them if truncated mid-structure.
+    for cut in range(len(text), 0, -1):
+        candidate = text[:cut].rstrip().rstrip(",")
+        opens_curly = candidate.count("{") - candidate.count("}")
+        opens_square = candidate.count("[") - candidate.count("]")
+        if opens_curly < 0 or opens_square < 0:
+            continue
+        closer = ("]" * opens_square) + ("}" * opens_curly)
+        try:
+            return json.loads(candidate + closer)
+        except json.JSONDecodeError:
+            continue
+    return None
 
 
 @register_task("summarize")
@@ -71,7 +115,7 @@ def summarize_document(
     # Render the prompt with the document text
     prompt = prompt_loader.render(
         task_config.prompt_template,
-        document_text=document_text,
+        document_text=_truncate_for_llm(document_text),
     )
 
     # Call GPT-4o
@@ -96,7 +140,7 @@ def extract_clauses(
     """
     prompt = prompt_loader.render(
         task_config.prompt_template,
-        document_text=document_text,
+        document_text=_truncate_for_llm(document_text),
     )
     response = llm_caller(prompt)
     result = _safe_parse_json(response)
@@ -150,7 +194,7 @@ def check_compliance(
     """
     prompt = prompt_loader.render(
         task_config.prompt_template,
-        document_text=document_text,
+        document_text=_truncate_for_llm(document_text),
     )
     response = llm_caller(prompt)
     result = _safe_parse_json(response)

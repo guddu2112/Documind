@@ -17,16 +17,24 @@
 8. [API Layer](#8-api-layer)
 9. [Pluggable Document Types](#9-pluggable-document-types)
 10. [Observability & Telemetry](#10-observability--telemetry)
-11. [Azure Deployment Architecture](#11-azure-deployment-architecture)
-12. [Production Networking & Security](#12-production-networking--security)
-13. [Infrastructure as Code](#13-infrastructure-as-code)
-14. [Scalability & Performance](#14-scalability--performance)
+11. [Offline / Local Mode](#11-offline--local-mode)
+12. [RAG Q&A (/ask)](#12-rag-qa-ask)
+13. [Azure Deployment Architecture](#13-azure-deployment-architecture)
+14. [Production Networking & Security](#14-production-networking--security)
+15. [Infrastructure as Code](#15-infrastructure-as-code)
+16. [Scalability & Performance](#16-scalability--performance)
 
 ---
 
 ## 1. Executive Summary
 
-DocuMind is an **AI-powered document processing accelerator** that ingests enterprise documents (RFPs, contracts, technical specs), extracts structured data using Azure Document Intelligence, runs LLM-based analysis via GPT-4o, and indexes results for semantic search — all orchestrated through a **multi-agent pipeline** built on Microsoft Agent Framework.
+DocuMind is an **AI-powered document processing accelerator** that ingests enterprise documents (RFPs, contracts, technical specs), extracts structured data, runs LLM-based analysis, indexes results for semantic search, and answers grounded questions via a **RAG `/ask` endpoint** — all orchestrated through a **multi-agent pipeline** built on Microsoft Agent Framework.
+
+The same codebase runs in three modes selected by env vars (`BACKEND`, `LOCAL_LLM_PROVIDER`):
+
+- **Azure** — Azure OpenAI (GPT-4o) + Document Intelligence + Cosmos DB (vector) + Blob Storage + managed identity. Production path.
+- **Offline + Gemini** — Google Gemini (cloud LLM) + ChromaDB + SQLite + local filesystem + `sentence-transformers` embeddings + local file extractors. Fast local dev.
+- **Offline + Ollama** — Ollama (local LLM) + same offline vector/metadata/blob stack. Fully air-gapped.
 
 **Key Metrics:**
 | Metric | Target |
@@ -67,15 +75,18 @@ DocuMind is an **AI-powered document processing accelerator** that ingests enter
 │  └──┬───┘  └──┬──────┘  └───┬─────┘  └───┬──────┘                    │
 │     │         │             │             │                            │
 │  ┌──▼─────────▼─────────────▼─────────────▼────────────────────────┐  │
-│  │  SERVICES LAYER (Azure SDK Wrappers)                            │  │
-│  │  BlobStorage · CosmosDB · DocIntelligence · VectorSearch        │  │
-│  │  PromptLoader · DocumentChunker                                 │  │
+│  │  SERVICES FACTORY  (src/documind/services/factory.py)           │  │
+│  │  Chooses Azure vs local impls by env (BACKEND, LOCAL_LLM_PROVIDER)│  │
+│  │  get_llm_caller · get_llm_text_caller · get_embedding_fn        │  │
+│  │  get_search_service · get_document_store · get_blob_store       │  │
+│  │  get_extraction_service · PromptLoader · DocumentChunker        │  │
 │  └──┬─────────┬─────────────┬─────────────┬───────────────────────┘   │
 │     │         │             │             │                            │
 │  ┌──▼─────────▼─────────────▼─────────────▼────────────────────────┐  │
-│  │  AZURE PLATFORM                                                 │  │
-│  │  Blob Storage · Cosmos DB · Doc Intelligence · Azure OpenAI     │  │
-│  │  Key Vault · App Insights · Log Analytics                       │  │
+│  │  PLATFORM — picked at runtime                                   │  │
+│  │  Azure mode : OpenAI · Doc Intelligence · Cosmos DB · Blob      │  │
+│  │  Offline    : Gemini OR Ollama · ChromaDB · SQLite · filesystem │  │
+│  │  Shared     : Key Vault · App Insights · Log Analytics (Azure)  │  │
 │  └─────────────────────────────────────────────────────────────────┘  │
 │                                                                        │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
@@ -468,6 +479,38 @@ Storage Account: documinddevst
     └── {document_id}/metadata.json    ← supplementary data (future)
 ```
 
+### 6.4 Offline / Local Service Equivalents
+
+When `BACKEND=local`, the Services Factory wires every Azure dependency to a drop-in local replacement. Agent code is unchanged.
+
+| Concern | Azure mode | Offline mode | Factory accessor |
+|---------|------------|--------------|------------------|
+| **LLM (JSON extraction)** | Azure OpenAI (GPT-4o) | Gemini (`gemini-3.5-flash`) **or** Ollama (`llama3.x`) | `get_llm_caller()` |
+| **LLM (free-text / RAG)** | Azure OpenAI (GPT-4o) | Gemini **or** Ollama (same provider, `force_json=False`) | `get_llm_text_caller()` |
+| **Embeddings** | `text-embedding-3-small` (1536-d) | `sentence-transformers/all-MiniLM-L6-v2` (384-d, CPU) | `get_embedding_fn()` |
+| **Vector search** | Cosmos DB (DiskANN) | ChromaDB persistent client (`./data/chroma/`) | `get_search_service()` |
+| **Document store** | Cosmos DB (`documents` container) | SQLite (`./data/documind.sqlite`) | `get_document_store()` |
+| **Blob storage** | Azure Blob Storage | Local filesystem (`./data/blobs/`) | `get_blob_store()` |
+| **Extraction** | Azure Document Intelligence | PyMuPDF + python-docx + openpyxl | `get_extraction_service()` |
+| **Auth** | Entra ID / API key | `AUTH_MODE=none` | middleware |
+
+Source:
+
+```
+src/documind/services/
+├── factory.py                 # Mode selector (BACKEND / LOCAL_LLM_PROVIDER)
+├── cosmos.py                  # Azure document store
+├── blob_storage.py            # Azure blob store
+├── vector_search.py           # Azure (Cosmos) vector search
+└── local/
+    ├── chroma_search.py       # ChromaDB vector search
+    ├── sqlite_store.py        # SQLite document store
+    ├── filesystem_blob.py     # Local filesystem blob store
+    ├── gemini_llm.py          # Google Gemini client (with retry/backoff)
+    ├── ollama_llm.py          # Ollama HTTP client
+    └── local_extractor.py     # PyMuPDF / python-docx / openpyxl
+```
+
 ---
 
 ## 7. Data Models & State Machine
@@ -566,17 +609,21 @@ FastAPI Application (port 8000)
 ├── POST   /documents                    ← Upload document (multipart/form-data)
 │   └── Returns: 202 Accepted { document_id, status: "pending" }
 │
-├── GET    /documents/{id}               ← Poll processing status
-│   └── Query: ?doc_type=rfp
-│   └── Returns: { status, stages_completed, timestamps }
+├── GET    /documents/{id}               ← Poll processing status + stage history
+│   └── Query: ?doc_type=rfp (optional; omit for auto-detect)
+│   └── Returns: { status, stages_completed, timestamps, error_message? }
 │
-├── GET    /documents/{id}/analysis      ← Get full extraction + analysis results
-│   └── Query: ?doc_type=rfp
+├── GET    /documents/{id}/analysis      ← Full extraction + analysis results
+│   └── Query: ?doc_type=rfp (optional)
 │   └── Returns: { extraction: {...}, analysis: {...} }
 │
-├── POST   /search                       ← Semantic search across all documents
+├── POST   /search                       ← Semantic search across indexed corpus
 │   └── Body: { query, doc_type?, top, offset }
 │   └── Returns: { results: [{ id, content, score, doc_type }] }
+│
+├── POST   /ask                          ← RAG Q&A (retrieve + ground + answer)
+│   └── Body: { question, doc_type?, top }
+│   └── Returns: { question, answer, citations: [{ id, score, preview, doc_type }] }
 │
 ├── WS     /documents/{id}/ws            ← WebSocket live pipeline updates
 │   └── Sends: PipelineEvent on each status change
@@ -587,9 +634,12 @@ FastAPI Application (port 8000)
 ├── GET    /health                       ← Liveness probe (always 200)
 │   └── Returns: { status: "healthy" }
 │
-└── GET    /ready                        ← Readiness probe
-    └── Returns: { status: "ready"|"degraded", checks: [...] }
-    └── Checks: Cosmos DB, Blob Storage, Azure OpenAI connectivity
+├── GET    /ready                        ← Readiness probe
+│   └── Returns: { status: "ready"|"degraded", checks: [...] }
+│   └── Checks: metadata store, vector store, LLM provider connectivity
+│
+└── *      /mcp                          ← MCP server (Streamable HTTP mount)
+    └── Tools: list_doc_types, summarize, extract_clauses, check_compliance
 ```
 
 ### 8.2 Real-Time Updates
@@ -717,7 +767,186 @@ configure_azure_monitor(
 
 ---
 
-## 11. Azure Deployment Architecture
+## 11. Offline / Local Mode
+
+DocuMind can run end-to-end with **no Azure resources** by setting `BACKEND=local`. The factory in [`src/documind/services/factory.py`](../src/documind/services/factory.py) swaps every Azure wrapper for a local implementation at startup.
+
+### 11.1 Mode Selection
+
+```
+       ┌────────────────────────────────────────┐
+       │  Settings (pydantic-settings, .env)       │
+       │  BACKEND            = azure | local      │
+       │  LOCAL_LLM_PROVIDER = gemini | ollama    │
+       │  AUTH_MODE          = entra_id|api_key|none│
+       └──────────────────┬────────────────────┘
+                          ▼
+       ┌────────────────────────────────────────┐
+       │           services.factory               │
+       │  get_llm_caller()                        │
+       │  get_llm_text_caller()        (RAG)      │
+       │  get_embedding_fn()                      │
+       │  get_search_service()                    │
+       │  get_document_store()                    │
+       │  get_blob_store()                        │
+       │  get_extraction_service()                │
+       └───────────┬───────────────────────────┘
+              ┌────────┴──────────┐
+              ▼                   ▼
+       Azure wrappers       Local wrappers
+       (cosmos, blob,       (sqlite_store,
+        openai, docint,      filesystem_blob,
+        vector_search)       chroma_search,
+                             gemini_llm,
+                             ollama_llm,
+                             local_extractor)
+```
+
+Factory accessors are `@functools.lru_cache(maxsize=1)` singletons — one instance per process. `get_llm_caller()` returns a **JSON-mode** caller used by the Analysis agent; `get_llm_text_caller()` returns a **free-text** caller used by `/ask`.
+
+### 11.2 Offline Pipeline Flow
+
+The four pipeline stages run **unchanged** against the local backends:
+
+```
+Upload                                                             │
+  │                                                                │
+  ▼                                                                │
+Ingestion    ───  filesystem_blob.put_object()  ───▶  ./data/blobs/│
+  │          ───  sqlite_store.upsert(record=PENDING)              │
+  ▼                                                                │
+Extraction   ───  local_extractor.extract(file_bytes, mime)         │
+  │               (PyMuPDF / python-docx / openpyxl)                │
+  ▼                                                                │
+Analysis     ───  get_llm_caller() in JSON mode                     │
+  │               (Gemini: response_mime_type=application/json      │
+  │                Ollama: format=json)                             │
+  ▼                                                                │
+Indexing     ───  sentence-transformers embeddings (384-d, CPU)     │
+  │          ───  chroma_search.upsert(id, text, embedding, meta) │
+  │          ───  sqlite_store.upsert(record=COMPLETED,            │
+  │                                 stages_completed=[…])          │
+  ▼                                                                │
+REST / UI / MCP / /ask share the same Chroma collection + SQLite  │
+```
+
+### 11.3 LLM Providers (offline)
+
+| Provider | Transport | JSON mode | RAG mode | Env | Notes |
+|----------|-----------|-----------|----------|-----|-------|
+| **Gemini** | `google-genai` SDK | `response_mime_type=application/json` | plain text | `GEMINI_API_KEY`, `GEMINI_MODEL` | Cloud; retries 429/503 with exponential backoff; recommended for interactive dev |
+| **Ollama** | HTTP (`/api/generate`) | `format=json` | plain text | `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | Fully air-gapped; CPU inference is slow (minutes) |
+
+Switching providers is a single env change — `LOCAL_LLM_PROVIDER=gemini` or `=ollama` — and a process restart. The Analysis agent is provider-agnostic.
+
+### 11.4 Offline Readiness Probe
+
+`GET /ready` adapts its checks per mode:
+
+```json
+{
+  "status": "ready",
+  "checks": [
+    { "name": "sqlite",    "status": "ok" },
+    { "name": "chromadb",  "status": "ok" },
+    { "name": "gemini",    "status": "ok", "detail": "model=gemini-3.5-flash" }
+  ]
+}
+```
+
+### 11.5 On-Disk Layout
+
+```
+./data/
+├── chroma/            # ChromaDB persistent store (HNSW cosine)
+├── documind.sqlite    # SQLite DocumentRecord table
+└── blobs/
+    └── documents/<document_id>/<filename>
+```
+
+Delete `./data/` to reset the offline install.
+
+### 11.6 Limitations
+
+- **No OCR** — image-only PDFs yield empty content (offline extractor has no fallback to Azure Document Intelligence).
+- **Smaller embeddings** — 384-d vs 1536-d. Semantic quality is lower; keep `top` higher for RAG recall.
+- **Single-writer SQLite** — avoid parallel pipelines against the same `./data/documind.sqlite`.
+- **No RBAC** — offline mode intentionally runs with `AUTH_MODE=none`; do not expose to the public internet.
+
+See [RUNNING-OFFLINE.md](../RUNNING-OFFLINE.md) for the operator runbook.
+
+---
+
+## 12. RAG Q&A (/ask)
+
+`POST /ask` is a thin retrieval-augmented generation layer that reuses the same vector store the pipeline writes to.
+
+### 12.1 Request / Response
+
+```http
+POST /ask
+Content-Type: application/json
+
+{ "question": "Who are the parties in the agreement?",
+  "doc_type": "contract",
+  "top": 5 }
+```
+
+```json
+{
+  "question": "Who are the parties in the agreement?",
+  "answer":   "The parties are Alpine Solutions Group, LLC ... and Woodgrove Bank, N.A. [1].",
+  "citations": [
+    { "id": "1e4b3eb1-…", "doc_type": "contract",
+      "score": 0.57, "preview": "PROFESSIONAL SERVICES AGREEMENT …" }
+  ]
+}
+```
+
+### 12.2 Pipeline
+
+```
+/ask body
+   │
+   ▼
+factory.get_search_service()
+   │  semantic_search(query, top, filter=doc_type?)       ← Chroma or Cosmos DB
+   │  returns [{id, content, score, doc_type, …}]
+   ▼
+Build grounded prompt
+   │  [n] (id=…, type=…) <content truncated to 1800 chars>
+   │  Rules: cite [n]; refuse if sources insufficient
+   ▼
+factory.get_llm_text_caller()                           ← free-text LLM (no JSON mode)
+   │  returns answer string
+   ▼
+Assemble AskResponse
+   │  answer + citations (first 240 chars of each hit)
+   ▼
+200 OK
+```
+
+### 12.3 Grounding Rules
+
+The prompt (see [`src/documind/api/endpoints/ask.py`](../src/documind/api/endpoints/ask.py)) enforces three guarantees:
+
+1. **Source-only answers** — the model is told to use ONLY the context passages.
+2. **Explicit refusal** — if sources are insufficient, it must reply exactly: *“The provided documents do not contain enough information to answer.”*
+3. **Inline citations** — each supporting statement cites `[n]` matching a numbered source block.
+
+### 12.4 Backend Compatibility
+
+| Mode | Retrieval | Generation |
+|------|-----------|------------|
+| Azure | Cosmos DB vector search | Azure OpenAI (GPT-4o) |
+| Offline + Gemini | ChromaDB | Gemini (text) |
+| Offline + Ollama | ChromaDB | Ollama (text) |
+
+The endpoint code is identical across modes — only the factory wiring differs.
+
+---
+
+## 13. Azure Deployment Architecture
 
 ### 11.1 Development Architecture (Current)
 
@@ -847,7 +1076,7 @@ configure_azure_monitor(
 
 ---
 
-## 12. Production Networking & Security
+## 14. Production Networking & Security
 
 ### 12.1 Network Topology
 
@@ -903,7 +1132,7 @@ configure_azure_monitor(
 
 ---
 
-## 13. Infrastructure as Code
+## 15. Infrastructure as Code
 
 ### 13.1 Terraform Module Dependency Graph
 
@@ -984,7 +1213,7 @@ az containerapp update --name documind-prod-api --image documind:latest
 
 ---
 
-## 14. Scalability & Performance
+## 16. Scalability & Performance
 
 ### 14.1 Throughput Characteristics
 

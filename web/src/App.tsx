@@ -4,8 +4,9 @@ import UploadPanel from "./components/UploadPanel";
 import StatusTracker from "./components/StatusTracker";
 import AnalysisView from "./components/AnalysisView";
 import SearchPanel from "./components/SearchPanel";
+import AskPanel from "./components/AskPanel";
 
-type Tab = "upload" | "status" | "search";
+type Tab = "upload" | "status" | "search" | "ask";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("upload");
@@ -29,6 +30,7 @@ export default function App() {
     { key: "upload", label: "Upload" },
     { key: "status", label: "Status & Analysis" },
     { key: "search", label: "Search" },
+    { key: "ask", label: "Ask" },
   ];
 
   return (
@@ -93,6 +95,8 @@ export default function App() {
         )}
 
         {tab === "search" && <SearchPanel />}
+
+        {tab === "ask" && <AskPanel />}
       </main>
     </div>
   );

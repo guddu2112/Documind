@@ -36,6 +36,8 @@ _EXTENSION_MAP: dict[str, SupportedFormat] = {
     ".jpeg": SupportedFormat.JPG,
     ".tiff": SupportedFormat.TIFF,
     ".tif": SupportedFormat.TIFF,
+    ".txt": SupportedFormat.TXT,
+    ".md": SupportedFormat.MD,
 }
 
 

@@ -23,6 +23,8 @@ class SupportedFormat(str, Enum):
     PNG = "png"
     JPG = "jpg"
     TIFF = "tiff"
+    TXT = "txt"
+    MD = "md"
 
 
 class ExtractionFieldConfig(BaseModel):

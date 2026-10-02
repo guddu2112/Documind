@@ -125,6 +125,7 @@ class DocumentPipeline:
                         result.document_id, result.record.doc_type, result.record.blob_url)
 
             # Persist initial record in Cosmos if available
+            result.record.stages_completed = list(result.stages_completed)
             self._update_status(result.record, ProcessingStatus.EXTRACTING)
 
         except Exception as exc:
@@ -142,6 +143,7 @@ class DocumentPipeline:
                         getattr(extraction_out, 'page_count', '?'),
                         len(getattr(extraction_out, 'text', '') or ''))
 
+            result.record.stages_completed = list(result.stages_completed)
             self._update_status(result.record, ProcessingStatus.ANALYZING)
 
         except Exception as exc:
@@ -158,6 +160,7 @@ class DocumentPipeline:
             logger.info("✔ Stage 3/4: ANALYSIS complete — summary_len=%s",
                         len(getattr(analysis_out, 'summary', '') or ''))
 
+            result.record.stages_completed = list(result.stages_completed)
             self._update_status(result.record, ProcessingStatus.INDEXING)
 
         except Exception as exc:
@@ -177,6 +180,7 @@ class DocumentPipeline:
             result.record.completed_at = datetime.utcnow()
             logger.info("✔ Stage 4/4: SEARCH INDEXING complete")
 
+            result.record.stages_completed = list(result.stages_completed)
             self._update_status(result.record, ProcessingStatus.COMPLETED)
 
         except Exception as exc:

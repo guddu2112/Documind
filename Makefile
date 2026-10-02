@@ -19,9 +19,25 @@ install: ## Install all dependencies (prod + dev)
 	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -e ".[dev]"
 
+.PHONY: install-offline
+install-offline: ## Install dependencies for fully offline mode (ChromaDB + Ollama + local extractors)
+	python -m venv .venv
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -e ".[dev,offline]"
+	@echo ""
+	@echo "Offline install complete."
+	@echo "  1. Install Ollama:            https://ollama.com/download"
+	@echo "  2. Pull the default model:    ollama pull llama3.1:8b"
+	@echo "  3. Copy env template:         cp .env.local.template .env"
+	@echo "  4. Start the stack:           make dev-offline"
+
 .PHONY: dev
 dev: ## Start API (port 8000) + frontend (port 3000) in parallel
 	$(MAKE) -j2 run web-dev
+
+.PHONY: dev-offline
+dev-offline: ## Start API + frontend in fully offline mode (BACKEND=local)
+	BACKEND=local $(MAKE) -j2 run web-dev
 
 .PHONY: run
 run: ## Start the API server (default port 8000)

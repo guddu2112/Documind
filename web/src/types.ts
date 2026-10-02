@@ -94,3 +94,16 @@ export interface SearchResponse {
   offset: number;
   top: number;
 }
+
+export interface AskCitation {
+  id: string;
+  doc_type: string;
+  score: number;
+  preview: string;
+}
+
+export interface AskResponse {
+  question: string;
+  answer: string;
+  citations: AskCitation[];
+}

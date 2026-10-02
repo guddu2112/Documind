@@ -3,6 +3,7 @@ import type {
   DocumentStatus,
   AnalysisResponse,
   SearchResponse,
+  AskResponse,
 } from "./types";
 
 const BASE = "";
@@ -55,4 +56,19 @@ export async function search(
     body: JSON.stringify(body),
   });
   return json<SearchResponse>(res);
+}
+
+export async function askQuestion(
+  question: string,
+  docType?: string,
+  top = 5
+): Promise<AskResponse> {
+  const body: Record<string, unknown> = { question, top };
+  if (docType) body.doc_type = docType;
+  const res = await fetch(`${BASE}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return json<AskResponse>(res);
 }

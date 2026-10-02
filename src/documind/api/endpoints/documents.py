@@ -48,42 +48,18 @@ def _build_pipeline():
     from documind.agents.search.agent import SearchExecutor
     from documind.agents.orchestrator.workflow import DocumentPipeline
     from documind.doctypes.registry import DocTypeRegistry
-    from documind.services.blob_storage import BlobStorageService
-    from documind.services.cosmos import CosmosService
-    from documind.services.document_intelligence import DocumentIntelligenceService
+    from documind.services import factory
     from documind.services.prompt_loader import PromptLoader
-    from documind.services.vector_search import VectorSearchService
-    from documind.core.config.settings import settings
 
     registry = DocTypeRegistry()
     registry.load()
 
-    blob_svc = BlobStorageService()
-    di_svc = DocumentIntelligenceService()
-    cosmos_svc = CosmosService()
-    vector_svc = VectorSearchService()
+    blob_svc = factory.get_blob_store()
+    di_svc = factory.get_extractor()
+    cosmos_svc = factory.get_record_store()
+    vector_svc = factory.get_search_service()
+    llm_caller = factory.get_llm_caller()
     prompt_loader = PromptLoader()
-
-    # Build an LLM caller using Azure OpenAI
-    def llm_caller(prompt: str) -> str:
-        from openai import AzureOpenAI
-        from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-
-        token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(),
-            "https://cognitiveservices.azure.com/.default",
-        )
-        client = AzureOpenAI(
-            azure_endpoint=settings.azure_openai_endpoint,
-            azure_ad_token_provider=token_provider,
-            api_version=settings.azure_openai_api_version,
-        )
-        response = client.chat.completions.create(
-            model=settings.foundry_model_deployment,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=settings.llm_temperature,
-        )
-        return response.choices[0].message.content or ""
 
     ingestion = IngestionExecutor(registry=registry, blob_service=blob_svc)
     extraction = ExtractionExecutor(registry=registry, di_service=di_svc)
@@ -134,8 +110,8 @@ def _run_pipeline_background(
         traceback.print_exc(file=sys.stderr)
         # Also update Cosmos record to FAILED so status endpoint can report it
         try:
-            from documind.services.cosmos import CosmosService
-            cosmos = CosmosService()
+            from documind.services import factory
+            cosmos = factory.get_record_store()
             cosmos.update_status(document_id, doc_type or "unknown", ProcessingStatus.FAILED)
         except Exception:
             logger.warning("Could not update Cosmos status to FAILED for %s", document_id)
@@ -174,10 +150,10 @@ async def upload_document(
     # Create an initial PENDING record in Cosmos so the status endpoint
     # can find this document immediately (before the pipeline runs).
     try:
-        from documind.services.cosmos import CosmosService
+        from documind.services import factory
         from documind.core.models.base import DocumentRecord
 
-        cosmos = CosmosService()
+        cosmos = factory.get_record_store()
         initial_record = DocumentRecord(
             document_id=document_id,
             doc_type=effective_doc_type,
@@ -185,12 +161,12 @@ async def upload_document(
             status=ProcessingStatus.PENDING,
         )
         cosmos.create_record(initial_record)
-        logger.info("Created pending Cosmos record for %s (partition=%s)", document_id, effective_doc_type)
+        logger.info("Created pending record for %s (partition=%s)", document_id, effective_doc_type)
     except Exception as exc:
         # Print to stderr as failsafe — logging may be silenced by uvicorn
         import sys
-        print(f"[DOCUMIND ERROR] Failed to create Cosmos record for {document_id}: {exc}", file=sys.stderr, flush=True)
-        logger.exception("Failed to create initial Cosmos record for %s", document_id)
+        print(f"[DOCUMIND ERROR] Failed to create record for {document_id}: {exc}", file=sys.stderr, flush=True)
+        logger.exception("Failed to create initial record for %s", document_id)
 
     background_tasks.add_task(
         _run_pipeline_background,
@@ -214,28 +190,21 @@ async def upload_document(
 )
 async def get_document_status(document_id: str, doc_type: str | None = None):
     """Retrieve the current processing status for a document."""
-    from documind.services.cosmos import CosmosService
+    from documind.services import factory
 
-    cosmos = CosmosService()
+    cosmos = factory.get_record_store()
     record = None
 
-    # If doc_type provided, try a direct point-read (fast)
-    if doc_type:
+    # Skip point-read on the "pending" placeholder partition — the real row lives under the classified doc_type.
+    if doc_type and doc_type != "pending":
         try:
             record = cosmos.get_record(document_id, doc_type)
         except Exception:
             pass
 
-    # Fallback: cross-partition query by document_id
     if record is None:
         try:
-            items = list(cosmos._container.query_items(
-                query="SELECT * FROM c WHERE c.document_id = @id",
-                parameters=[{"name": "@id", "value": document_id}],
-                enable_cross_partition_query=True,
-            ))
-            if items:
-                record = items[0]
+            record = cosmos.query_by_document_id(document_id)
         except Exception:
             pass
 
@@ -261,12 +230,12 @@ async def get_document_status(document_id: str, doc_type: str | None = None):
 )
 async def get_document_analysis(document_id: str, doc_type: str | None = None):
     """Retrieve extraction and analysis results for a processed document."""
-    from documind.services.cosmos import CosmosService
+    from documind.services import factory
 
-    cosmos = CosmosService()
+    cosmos = factory.get_record_store()
     record = None
 
-    if doc_type:
+    if doc_type and doc_type != "pending":
         try:
             record = cosmos.get_record(document_id, doc_type)
         except Exception:
@@ -274,13 +243,7 @@ async def get_document_analysis(document_id: str, doc_type: str | None = None):
 
     if record is None:
         try:
-            items = list(cosmos._container.query_items(
-                query="SELECT * FROM c WHERE c.document_id = @id",
-                parameters=[{"name": "@id", "value": document_id}],
-                enable_cross_partition_query=True,
-            ))
-            if items:
-                record = items[0]
+            record = cosmos.query_by_document_id(document_id)
         except Exception:
             pass
 

@@ -44,30 +44,12 @@ _prompt_loader = PromptLoader()
 def _get_llm_caller():
     """Build the LLM caller from environment settings.
 
-    Uses the same Azure OpenAI config as the main pipeline.  Deferred
-    to first call so the server starts quickly even if the env vars are
-    not set (e.g. during tests / schema introspection).
+    Delegates to :mod:`documind.services.factory` so it follows the
+    ``settings.backend = "azure" | "local"`` switch.
     """
-    from openai import AzureOpenAI
+    from documind.services import factory
 
-    from documind.core.config.settings import settings
-
-    client = AzureOpenAI(
-        azure_endpoint=settings.azure_openai_endpoint,
-        api_key=settings.azure_openai_key,
-        api_version=settings.azure_openai_api_version,
-    )
-    deployment = settings.azure_openai_deployment
-
-    def call_llm(prompt: str) -> str:
-        response = client.chat.completions.create(
-            model=deployment,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=settings.llm_temperature,
-        )
-        return response.choices[0].message.content or ""
-
-    return call_llm
+    return factory.get_llm_caller()
 
 
 # ── MCP Server ──────────────────────────────────────────────────

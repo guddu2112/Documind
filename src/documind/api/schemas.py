@@ -101,6 +101,34 @@ class SearchResponse(BaseModel):
     top: int = 10
 
 
+# ── Ask (RAG) ──────────────────────────────────────────────────────
+
+
+class AskRequest(BaseModel):
+    """Natural-language question against the indexed corpus."""
+
+    question: str = Field(..., min_length=1, max_length=2000)
+    doc_type: Optional[str] = Field(None, description="Restrict retrieval to one document type.")
+    top: int = Field(5, ge=1, le=20, description="Number of chunks to retrieve for grounding.")
+
+
+class AskCitation(BaseModel):
+    """A document used to ground the answer."""
+
+    id: str
+    doc_type: str = ""
+    score: float = 0.0
+    preview: str = ""
+
+
+class AskResponse(BaseModel):
+    """RAG answer with citations."""
+
+    question: str
+    answer: str
+    citations: list[AskCitation] = Field(default_factory=list)
+
+
 # ── Health ─────────────────────────────────────────────────────────
 
 

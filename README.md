@@ -4,16 +4,25 @@
 
 ## Overview
 
-DocuMind is a reusable practice accelerator that automates document review using a multi-agent AI pipeline built on Azure. It targets the pain of manual document review across client engagements — RFPs, contracts, and technical specifications — delivering ~60% reduction in review time.
+DocuMind is a reusable practice accelerator that automates document review using a multi-agent AI pipeline. It targets the pain of manual document review across client engagements — RFPs, contracts, and technical specifications — delivering ~60% reduction in review time.
+
+It can run in three modes with **no code changes** — picked by env vars:
+
+| Mode | LLM | Vectors / Metadata / Blobs | Best for |
+|------|-----|----------------------------|----------|
+| **Azure** | Azure OpenAI (GPT-4o) | Cosmos DB + Blob Storage + Document Intelligence | Production, clients |
+| **Offline + Gemini** | Google Gemini (cloud) | ChromaDB + SQLite + local filesystem | Fast local dev, demos |
+| **Offline + Ollama** | Ollama (local, llama3.x) | ChromaDB + SQLite + local filesystem | Fully air‑gapped runs |
 
 ### Key Features
 
 - **Multi-agent pipeline** — Ingestion → Extraction → Analysis → Search, orchestrated end-to-end
+- **RAG Q&A** — `POST /ask` grounds LLM answers in the indexed corpus with inline `[n]` citations
 - **Pluggable document types** — Add new doc types via YAML config, no code changes
 - **MCP server** — Expose analysis tools at `/mcp` for AI assistants (Copilot, Claude, etc.)
-- **React SPA frontend** — Upload, track progress, view results with real-time status polling
-- **One-command deployment** — `azd up` provisions all Azure infra, builds & pushes container
-- **Managed identity everywhere** — Zero secrets in config; all Azure services use RBAC
+- **React SPA frontend** — Upload, track progress, view results, semantic search, and ask questions
+- **One-command Azure deploy** — `azd up` provisions all Azure infra, builds & pushes container
+- **Managed identity everywhere** — Zero secrets in Azure mode; all services use RBAC
 
 ## Tech Stack
 
@@ -85,65 +94,225 @@ documind/
 
 ## Quick Start
 
-### Prerequisites
+Pick one of the three modes below. All three share the same code — the backend is selected by the `BACKEND` and `LOCAL_LLM_PROVIDER` env vars.
 
-- Python 3.11+
-- Node.js 18+ (for frontend build)
+### Prerequisites (common to all modes)
+
+- **Python 3.11+**
+- **Node.js 18+** (for the web UI)
+- **Git**
+
+Mode-specific extras are listed in each section below.
+
+---
+
+### Mode A — Azure (production / client deployments)
+
+Full managed Azure stack with Azure OpenAI, Document Intelligence, Cosmos DB (vector), Blob Storage, and Container Apps.
+
+**Extra prerequisites**
+
 - [Azure Developer CLI (`azd`)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd)
 - [Terraform ≥ 1.6](https://www.terraform.io/downloads)
 - [Docker](https://docs.docker.com/get-docker/)
-- Azure subscription with Azure OpenAI access
+- An Azure subscription with Azure OpenAI access
 
-### One-Command Deploy
+**One-command deploy**
 
-```bash
+```powershell
 azd auth login
 azd up
 ```
 
-This provisions all Azure resources (Terraform), builds the Docker image,
-pushes to ACR, and deploys to Container Apps. The API URL is printed at
-the end.
+This provisions all Azure resources (Terraform), builds the Docker image, pushes it to ACR, and deploys to Container Apps. The API URL is printed at the end.
 
-### Local Development
+**Local run against Azure services**
 
-```bash
-# Install Python + frontend dependencies
+```powershell
 make install
-cd web && npm install && cd ..
+cd web; npm install; cd ..
 
-# Copy and fill in environment variables
-cp .env.template .env
-# Edit .env with your Azure resource endpoints
-
-# Start API (port 8000) + frontend (port 3000) in parallel
-make dev
-
-# Or start them separately:
-make run        # API only
-make web-dev    # Frontend only (proxies to API)
-```
-
-### Generate .env from Terraform
-
-After provisioning infrastructure, generate a `.env` file automatically:
-
-```bash
+# Generate .env from the Terraform outputs you just created
 make env-gen
+
+# Start API (port 8000) + frontend (port 3000)
+make dev
 ```
+
+Minimum env for Mode A (filled in automatically by `make env-gen`):
+
+```env
+BACKEND=azure
+AUTH_MODE=entra_id         # or api_key / none
+AZURE_OPENAI_ENDPOINT=https://<...>.openai.azure.com
+AZURE_OPENAI_KEY=           # leave blank to use managed identity
+AZURE_DOC_INTELLIGENCE_ENDPOINT=https://<...>.cognitiveservices.azure.com
+AZURE_COSMOS_ENDPOINT=https://<...>.documents.azure.com:443/
+AZURE_STORAGE_ACCOUNT_NAME=<...>
+FOUNDRY_MODEL_DEPLOYMENT=gpt-4o
+EMBEDDING_MODEL=text-embedding-3-small
+```
+
+---
+
+### Mode B — Offline + Gemini (recommended for local dev)
+
+Runs the full pipeline locally against ChromaDB + SQLite + local filesystem, with **Google Gemini** as the LLM (fast, no local GPU required). Embeddings use `sentence-transformers/all-MiniLM-L6-v2` (CPU, ~90 MB, downloads once).
+
+**Extra prerequisites**
+
+- A Gemini API key — [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+
+**Install**
+
+```powershell
+# Windows PowerShell
+make install-offline
+cd web; npm install; cd ..
+```
+
+**Configure**
+
+```powershell
+Copy-Item .env.local.template .env
+```
+
+Edit `.env` to select Gemini and add your key:
+
+```env
+BACKEND=local
+AUTH_MODE=none
+
+LOCAL_LLM_PROVIDER=gemini
+GEMINI_API_KEY=<your-key>
+GEMINI_MODEL=gemini-3.5-flash
+GEMINI_TIMEOUT_SECONDS=120
+GEMINI_MAX_OUTPUT_TOKENS=2048
+
+# Vectors / metadata / blobs — all local
+CHROMA_PATH=./data/chroma
+SQLITE_PATH=./data/documind.sqlite
+LOCAL_BLOB_DIR=./data/blobs
+LOCAL_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+**Run**
+
+```powershell
+make dev-offline
+```
+
+- API: http://localhost:8000  (`/docs` for OpenAPI, `/ready` for health)
+- Web: http://localhost:3000
+
+`/ready` should report `gemini: ok, model=gemini-3.5-flash`.
+
+---
+
+### Mode C — Offline + Ollama (fully air‑gapped)
+
+Everything from Mode B, but swaps Gemini for a locally hosted Ollama model — **no outbound network calls** after the model is pulled.
+
+**Extra prerequisites**
+
+- [Ollama](https://ollama.com/download) running locally
+- A pulled chat model, e.g. `ollama pull llama3.2:3b` (small/fast) or `ollama pull llama3.1:8b` (better quality)
+
+**Install**
+
+```powershell
+make install-offline
+cd web; npm install; cd ..
+ollama pull llama3.2:3b
+```
+
+**Configure**
+
+```powershell
+Copy-Item .env.local.template .env
+```
+
+Edit `.env` to select Ollama:
+
+```env
+BACKEND=local
+AUTH_MODE=none
+
+LOCAL_LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+OLLAMA_TIMEOUT_SECONDS=900
+OLLAMA_NUM_PREDICT=2048
+LLM_TEMPERATURE=0.1
+
+CHROMA_PATH=./data/chroma
+SQLITE_PATH=./data/documind.sqlite
+LOCAL_BLOB_DIR=./data/blobs
+LOCAL_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+**Run**
+
+```powershell
+# Make sure Ollama is running first (ollama serve, or the tray app)
+make dev-offline
+```
+
+`/ready` should report `ollama: ok`.
+
+> **Note.** Ollama on CPU is noticeably slower than Gemini (minutes vs seconds per document). Use Mode B for interactive work and Mode C when you need an air‑gapped run.
+
+---
+
+### Smoke test (works in all modes)
+
+```powershell
+# Upload a sample contract
+curl.exe -F "file=@samples/contracts/software-license-agreement.txt" `
+         -F "doc_type=contract" `
+         http://localhost:8000/documents
+
+# Poll status (use the returned document_id)
+curl.exe http://localhost:8000/documents/<document_id>
+
+# Ask a grounded question (RAG)
+'{"question":"Who are the parties in the agreement?","top":3,"doc_type":"contract"}' `
+    | Set-Content -Encoding utf8 -NoNewline ask.json
+curl.exe -X POST -H "Content-Type: application/json" `
+         --data-binary "@ask.json" http://localhost:8000/ask
+```
+
+Or just open http://localhost:3000 and use the **Upload**, **Search**, and **Ask** tabs.
+
+---
+
+### Switching modes
+
+There is no re-install step. Change the env vars and restart:
+
+| From → To | Change |
+|-----------|--------|
+| Azure → Offline+Gemini | `BACKEND=local`, `LOCAL_LLM_PROVIDER=gemini`, set `GEMINI_API_KEY` |
+| Offline+Gemini → Offline+Ollama | `LOCAL_LLM_PROVIDER=ollama`, ensure Ollama is running |
+| Offline → Azure | `BACKEND=azure`, fill in the Azure endpoints |
+
+Delete `./data/` to reset the offline install (vectors, SQLite, blobs).
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/ready` | Readiness probe |
-| `POST` | `/documents/upload` | Upload a document for processing |
-| `GET` | `/documents/{id}/status` | Poll processing status |
-| `GET` | `/documents/{id}` | Get processed document results |
-| `POST` | `/search` | Search across processed documents |
-| `GET` | `/events/{id}` | SSE stream for real-time updates |
-| `POST` | `/mcp` | MCP endpoint (Streamable HTTP) |
+| `GET`  | `/health` | Liveness check |
+| `GET`  | `/ready` | Readiness probe (verifies LLM + vector store + metadata store) |
+| `POST` | `/documents` | Upload a document for processing |
+| `GET`  | `/documents/{id}` | Current status + metadata |
+| `GET`  | `/documents/{id}/analysis` | Full extraction + analysis results |
+| `POST` | `/search` | Semantic search across the indexed corpus |
+| `POST` | `/ask` | **RAG Q&A** — grounded answer with `[n]` citations |
+| `GET`  | `/events/{id}` | SSE stream of real-time pipeline updates |
+| `*`    | `/mcp` | MCP endpoint (Streamable HTTP) |
+
+Interactive OpenAPI UI: http://localhost:8000/docs
 
 ## MCP Server
 
@@ -198,25 +367,27 @@ See [add_new_doc_type_in_documind.md](add_new_doc_type_in_documind.md) for the f
 ## Makefile Targets
 
 ```
-make install      Install dependencies (prod + dev)
-make dev          API + frontend in parallel
-make run          API server only (port 8000)
-make test         Run tests
-make lint         Run ruff linter
-make format       Auto-format code
-make deploy       Full deployment (azd up)
-make provision    Provision infrastructure only
-make docker-build Build Docker image
-make docker-push  Build + push to ACR
-make infra-init   Terraform init
-make infra-plan   Terraform plan (dev)
-make infra-apply  Terraform apply (dev)
-make env-gen      Generate .env from Terraform outputs
-make mcp-http     API + MCP server (Streamable HTTP at /mcp)
-make web-install  Install frontend dependencies
-make web-dev      Vite dev server (port 3000)
-make web-build    Build frontend for production
-make add-doctype  Scaffold a new doc type
+make install          Install dependencies (Azure/base + dev extras)
+make install-offline  Install dependencies for offline mode (adds Chroma + Ollama HTTP + local extractors)
+make dev              API + frontend in parallel (uses current .env)
+make dev-offline      API + frontend with BACKEND=local (offline mode)
+make run              API server only (port 8000)
+make test             Run unit tests
+make lint             Run ruff linter
+make format           Auto-format code
+make deploy           Full Azure deployment (azd up)
+make provision        Provision Azure infra only
+make docker-build     Build Docker image
+make docker-push      Build + push to ACR
+make infra-init       Terraform init
+make infra-plan       Terraform plan (dev)
+make infra-apply      Terraform apply (dev)
+make env-gen          Generate .env from Terraform outputs
+make mcp-http         API + MCP server (Streamable HTTP at /mcp)
+make web-install      Install frontend dependencies
+make web-dev          Vite dev server (port 3000)
+make web-build        Build frontend for production
+make add-doctype      Scaffold a new doc type
 ```
 
 ## Environment Variables
@@ -249,6 +420,21 @@ See [.env.template](.env.template) for the full reference. Key variables:
 DocuMind ships with OpenTelemetry auto-instrumentation. HTTP request spans are exported to App Insights automatically. Per-stage pipeline tracing (ingestion → extraction → analysis → search) is available via `create_pipeline_span()` — see the tracing module at `src/documind/core/tracing.py`.
 
 To view traces: **App Insights → Transaction Search → filter by `POST /documents`**.
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+|---------|--------------------|
+| `/ready` shows `gemini: error` | `GEMINI_API_KEY` not set, invalid, or the chosen `GEMINI_MODEL` isn't available in your region. Try `gemini-3.5-flash`. |
+| `/ready` shows `ollama: error` | Ollama not running. Run `ollama serve` (or launch the tray app) and `ollama pull <OLLAMA_MODEL>`. |
+| First document upload takes 30–60 s | Sentence-transformers model download — one-time, cached under `~/.cache/huggingface/`. |
+| `/ask` returns *"The provided documents do not contain enough information…"* | Expected when retrieval misses — try increasing `top`, or rephrase the question. |
+| PDF extraction returns empty content | Image-only PDF. Offline mode has no OCR; use Mode A (Azure Document Intelligence) for scanned PDFs. |
+| `sqlite3.OperationalError: database is locked` | Multiple writers hit SQLite at once. Restart the API. |
+| `429 / 503` from Gemini | Rate limited or model unavailable. The client retries with exponential backoff; keep upload rates modest. |
+| Frontend 404s against `/ask` | Vite proxy out of date — restart `make web-dev`. |
+
+See [RUNNING-OFFLINE.md](RUNNING-OFFLINE.md) for the deep-dive on offline mode.
 
 ## Known Limitations
 

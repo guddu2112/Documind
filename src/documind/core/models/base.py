@@ -122,3 +122,4 @@ class DocumentRecord(BaseModel):
     analysis: Optional[AnalysisResult] = None
     blob_url: str = ""
     error_message: Optional[str] = None
+    stages_completed: list[str] = Field(default_factory=list)

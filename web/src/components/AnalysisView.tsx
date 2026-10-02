@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import type { AnalysisResponse, RiskItem } from "../types";
 import { getAnalysis } from "../api";
 
@@ -20,6 +21,79 @@ function SeverityBadge({ severity }: { severity: RiskItem["severity"] }) {
     >
       {severity}
     </span>
+  );
+}
+
+function humanize(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function MetadataValue({ value }: { value: unknown }): ReactNode {
+  if (value === null || value === undefined) {
+    return <span className="text-gray-400 italic">—</span>;
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return <span>{String(value)}</span>;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <span className="text-gray-400 italic">(empty)</span>;
+    }
+    const allPrimitive = value.every(
+      (v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean"
+    );
+    if (allPrimitive) {
+      return (
+        <ul className="list-disc pl-5 space-y-0.5">
+          {value.map((v, i) => (
+            <li key={i}>{String(v)}</li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <ul className="space-y-2">
+        {value.map((v, i) => (
+          <li key={i} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+            <MetadataValue value={v} />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    return (
+      <div className="space-y-1">
+        {entries.map(([k, v]) => (
+          <div key={k} className="text-sm">
+            <span className="font-medium text-gray-700">{humanize(k)}:</span>{" "}
+            <span className="text-gray-600"><MetadataValue value={v} /></span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <span>{String(value)}</span>;
+}
+
+function StructuredMetadata({ metadata }: { metadata: Record<string, unknown> }) {
+  const entries = Object.entries(metadata).filter(([, v]) => v !== null && v !== "");
+  return (
+    <div className="space-y-4">
+      {entries.map(([key, value]) => (
+        <section key={key}>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+            {humanize(key)}
+          </h3>
+          <div className="text-sm text-gray-700">
+            <MetadataValue value={value} />
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }
 
@@ -84,6 +158,8 @@ export default function AnalysisView({ documentId, docType }: Props) {
         <div className="prose prose-sm max-w-none text-gray-700">
           {analysis?.summary ? (
             <p className="whitespace-pre-wrap">{analysis.summary}</p>
+          ) : analysis?.metadata && Object.keys(analysis.metadata).length > 0 ? (
+            <StructuredMetadata metadata={analysis.metadata} />
           ) : (
             <p className="text-gray-400 italic">No summary available.</p>
           )}

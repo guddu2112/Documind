@@ -73,6 +73,10 @@ RFP - HWTE*.pdf
 # Test artifacts
 test_sample.txt
 test_upload.txt
+ask.json
+
+# Local runtime data (Chroma vectors, SQLite, blobs)
+data/
 
 # Draw.io backup files
 .*bkp

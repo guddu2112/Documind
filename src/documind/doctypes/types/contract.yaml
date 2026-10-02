@@ -12,6 +12,8 @@ supported_formats:
   - pdf
   - docx
   - pptx
+  - txt
+  - md
 
 doc_intelligence_model: prebuilt-contract
 

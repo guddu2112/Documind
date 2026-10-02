@@ -27,10 +27,10 @@ async def search_documents(body: SearchRequest):
     Supports optional filtering by ``doc_type`` and pagination via
     ``top`` / ``offset``.
     """
-    from documind.services.vector_search import VectorSearchService
+    from documind.services import factory
 
     try:
-        svc = VectorSearchService()
+        svc = factory.get_search_service()
         raw_results = svc.semantic_search(
             query=body.query,
             top=body.top,

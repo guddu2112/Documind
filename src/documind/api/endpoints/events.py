@@ -28,14 +28,14 @@ _MAX_DURATION = 300.0
 
 
 async def _poll_status(document_id: str, doc_type: str | None = None):
-    """Poll Cosmos DB for status changes.
+    """Poll the record store for status changes.
 
     Yields PipelineEvent dicts whenever the status changes.
-    Uses cross-partition query when doc_type is unknown.
+    Uses partition-key-free lookup when doc_type is unknown.
     """
-    from documind.services.cosmos import CosmosService
+    from documind.services import factory
 
-    cosmos = CosmosService()
+    cosmos = factory.get_record_store()
     last_status = None
     elapsed = 0.0
 
@@ -48,13 +48,10 @@ async def _poll_status(document_id: str, doc_type: str | None = None):
                 except Exception:
                     pass
             if record is None:
-                items = list(cosmos._container.query_items(
-                    query="SELECT * FROM c WHERE c.document_id = @id",
-                    parameters=[{"name": "@id", "value": document_id}],
-                    enable_cross_partition_query=True,
-                ))
-                if items:
-                    record = items[0]
+                try:
+                    record = cosmos.query_by_document_id(document_id)
+                except Exception:
+                    record = None
             if record is None:
                 await asyncio.sleep(_POLL_INTERVAL)
                 elapsed += _POLL_INTERVAL

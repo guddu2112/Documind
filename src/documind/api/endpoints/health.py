@@ -34,7 +34,7 @@ async def health():
     summary="Readiness probe — checks backend connectivity",
 )
 async def readiness():
-    """Check connectivity to Cosmos DB, Blob Storage, and Azure OpenAI.
+    """Check connectivity to the configured backend services.
 
     Returns 200 with ``status: ready`` if all checks pass, or 200 with
     ``status: degraded`` and details for each failing check.  We return
@@ -42,14 +42,17 @@ async def readiness():
     """
     checks: list[ReadinessCheck] = []
 
-    # ── Cosmos DB ───────────────────────────────────────────────
-    checks.append(await _check_cosmos())
-
-    # ── Blob Storage ────────────────────────────────────────────
-    checks.append(await _check_blob())
-
-    # ── Azure OpenAI ────────────────────────────────────────────
-    checks.append(await _check_openai())
+    if settings.backend == "local":
+        checks.append(await _check_sqlite())
+        checks.append(await _check_chroma())
+        if settings.local_llm_provider == "gemini":
+            checks.append(await _check_gemini())
+        else:
+            checks.append(await _check_ollama())
+    else:
+        checks.append(await _check_cosmos())
+        checks.append(await _check_blob())
+        checks.append(await _check_openai())
 
     all_ok = all(c.status == "ok" for c in checks)
     return ReadinessResponse(
@@ -58,7 +61,7 @@ async def readiness():
     )
 
 
-# ── Individual checks ──────────────────────────────────────────────
+# ── Individual checks (Azure) ──────────────────────────────────────
 
 
 async def _check_cosmos() -> ReadinessCheck:
@@ -126,3 +129,65 @@ async def _check_openai() -> ReadinessCheck:
     except Exception as exc:
         logger.warning("OpenAI readiness check failed: %s", exc)
         return ReadinessCheck(name="azure_openai", status="error", detail=str(exc))
+
+
+# ── Individual checks (Local) ──────────────────────────────────────
+
+
+async def _check_sqlite() -> ReadinessCheck:
+    """Verify SQLite record store is reachable."""
+    try:
+        from documind.services import factory
+
+        store = factory.get_record_store()
+        # Cheap: try a lookup that always succeeds if the DB is open
+        _ = store.query_by_document_id("__readiness_probe__")
+        return ReadinessCheck(name="sqlite", status="ok")
+    except Exception as exc:
+        logger.warning("SQLite readiness check failed: %s", exc)
+        return ReadinessCheck(name="sqlite", status="error", detail=str(exc))
+
+
+async def _check_chroma() -> ReadinessCheck:
+    """Verify ChromaDB collection is reachable."""
+    try:
+        from documind.services import factory
+
+        svc = factory.get_search_service()
+        # Trigger collection resolution; ChromaSearchService creates it lazily
+        _ = svc._collection  # type: ignore[attr-defined]
+        return ReadinessCheck(name="chromadb", status="ok")
+    except Exception as exc:
+        logger.warning("Chroma readiness check failed: %s", exc)
+        return ReadinessCheck(name="chromadb", status="error", detail=str(exc))
+
+
+async def _check_ollama() -> ReadinessCheck:
+    """Verify the Ollama runtime is reachable."""
+    try:
+        import httpx
+
+        base = settings.ollama_base_url.rstrip("/")
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{base}/api/tags")
+            if resp.status_code < 500:
+                return ReadinessCheck(name="ollama", status="ok")
+            return ReadinessCheck(
+                name="ollama",
+                status="error",
+                detail=f"HTTP {resp.status_code}",
+            )
+    except Exception as exc:
+        logger.warning("Ollama readiness check failed: %s", exc)
+        return ReadinessCheck(name="ollama", status="error", detail=str(exc))
+
+
+async def _check_gemini() -> ReadinessCheck:
+    """Verify Gemini is configured. Does not call the paid endpoint."""
+    if not settings.gemini_api_key:
+        return ReadinessCheck(name="gemini", status="error", detail="GEMINI_API_KEY not set")
+    try:
+        from google import genai  # noqa: F401
+    except Exception as exc:
+        return ReadinessCheck(name="gemini", status="error", detail=f"SDK import failed: {exc}")
+    return ReadinessCheck(name="gemini", status="ok", detail=f"model={settings.gemini_model}")
