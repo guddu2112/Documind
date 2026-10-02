@@ -2,9 +2,10 @@
 import httpx
 import json
 import time
+from pathlib import Path
 
 BASE = "http://127.0.0.1:8003"
-FILE_PATH = r"D:\EPAM\ai ideas\aiaccelerator\RFP - HWTE SN3.0 PRD_0124.pdf"
+FILE_PATH = str(Path(__file__).parent / "RFP - HWTE SN3.0 PRD_0124.pdf")
 
 # Upload
 with open(FILE_PATH, "rb") as f:
