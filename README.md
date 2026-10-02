@@ -266,20 +266,24 @@ make dev-offline
 
 ### Smoke test (works in all modes)
 
-```powershell
-# Upload a sample contract
-curl.exe -F "file=@samples/contracts/software-license-agreement.txt" `
-         -F "doc_type=contract" `
-         http://localhost:8000/documents
+Two sample files are included at the repo root for a 60-second demo:
 
-# Poll status (use the returned document_id)
-curl.exe http://localhost:8000/documents/<document_id>
+- [sample-contract.txt](sample-contract.txt) — Professional Services Agreement
+- [sample-rfp.txt](sample-rfp.txt) — Cloud Migration RFP
+
+```powershell
+# Upload the sample contract
+$upload = Invoke-RestMethod -Uri "http://127.0.0.1:8000/documents" -Method Post `
+    -Form @{ file = Get-Item sample-contract.txt; doc_type = "auto" }
+$id = $upload.document_id
+
+# Poll status (repeat until status = "completed")
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/documents/$id"
 
 # Ask a grounded question (RAG)
-'{"question":"Who are the parties in the agreement?","top":3,"doc_type":"contract"}' `
-    | Set-Content -Encoding utf8 -NoNewline ask.json
-curl.exe -X POST -H "Content-Type: application/json" `
-         --data-binary "@ask.json" http://localhost:8000/ask
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/ask" -Method Post `
+    -ContentType "application/json" `
+    -Body (@{ question = "Who are the parties in the agreement?"; doc_type = "contract"; top = 3 } | ConvertTo-Json)
 ```
 
 Or just open http://localhost:3000 and use the **Upload**, **Search**, and **Ask** tabs.
